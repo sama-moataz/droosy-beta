@@ -132,9 +132,9 @@ function Packages() {
                     </ul>
                   )}
                   <div className="mt-5 flex items-end gap-2">
-                    <span className="text-2xl font-extrabold">{price} JD</span>
+                    <span className="text-2xl font-extrabold">{price} EGP</span>
                     <span className="pb-1 text-sm text-muted-foreground line-through">
-                      {raw} JD
+                      {raw} EGP
                     </span>
                   </div>
                   <Button
@@ -180,7 +180,7 @@ function Packages() {
                         {t.name}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {t.subject} · {t.pricePerSession} JD
+                        {t.subject} · {t.pricePerSession} EGP
                       </span>
                     </span>
                     {active && <Check size={16} className="text-primary" />}
@@ -209,7 +209,7 @@ function Packages() {
                         {t!.subject} — {t!.name}
                       </span>
                       <span className="text-muted-foreground">
-                        {t!.pricePerSession} JD
+                        {t!.pricePerSession} EGP
                       </span>
                       <button
                         aria-label="Remove"
@@ -226,7 +226,7 @@ function Packages() {
               <div className="mt-5 space-y-1 border-t border-border pt-4 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>{subtotal} JD</span>
+                  <span>{subtotal} EGP</span>
                 </div>
                 <div className="flex justify-between text-primary">
                   <span>Bundle discount</span>
@@ -234,7 +234,7 @@ function Packages() {
                 </div>
                 <div className="flex justify-between text-base font-extrabold">
                   <span>Total per week</span>
-                  <span>{total} JD</span>
+                  <span>{total} EGP</span>
                 </div>
               </div>
 

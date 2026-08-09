@@ -75,7 +75,7 @@ export function DroosyProvider({
   const [authReady, setAuthReady] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>(catalog.reviews);
-  const [location, setLocation] = useState("All areas");
+  const [location, setLocation] = useState("all");
   const [cart, setCart] = useState<string[]>([]);
 
   useEffect(() => setReviews(catalog.reviews), [catalog.reviews]);

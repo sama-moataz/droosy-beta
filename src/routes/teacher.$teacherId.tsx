@@ -12,9 +12,10 @@ import {
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { Stars } from "@/components/droosy/Stars";
-import { MODE_LABEL, initials, type Teacher } from "@/lib/droosy-data";
+import { subjectLabel, governorateLabel, CURRICULUM_LABEL, GRADE_LABEL, MODE_LABEL, initials, type Teacher } from "@/lib/droosy-data";
 import { getCatalog } from "@/lib/droosy.functions";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,8 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 function TeacherProfile() {
   const { teacher } = Route.useLoaderData() as { teacher: Teacher };
   const { reviews, addReview, addBooking, cart, toggleCart } = useDroosy();
+  const { t, lang, pick } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");
@@ -77,7 +80,7 @@ function TeacherProfile() {
           to="/"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft size={15} /> Back to teachers
+          <ArrowLeft size={15} className="rtl-flip" /> {t("back_teachers")}
         </Link>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -92,11 +95,11 @@ function TeacherProfile() {
                     {initials(teacher.name)}
                   </div>
                   <div className="min-w-0 pb-1">
-                    <h1 className="truncate text-2xl font-extrabold tracking-tight">
-                      {teacher.name}
+                    <h1 className="truncate text-2xl font-extrabold tracking-tight text-foreground">
+                      {pick(teacher.name, teacher.nameAr)}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                      {teacher.subject} · {teacher.centerName}
+                      {L(subjectLabel(teacher.subject))} · {teacher.centerName}
                     </p>
                   </div>
                 </div>
@@ -110,15 +113,15 @@ function TeacherProfile() {
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Users size={15} /> {teacher.students.toLocaleString()} students
+                    <Users size={15} /> {teacher.students.toLocaleString()} {t("students")}
                   </span>
                   <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin size={15} /> {teacher.area}
+                    <MapPin size={15} /> {teacher.area} · {L(governorateLabel(teacher.region))}
                   </span>
                 </div>
 
                 <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                  {teacher.bio}
+                  {pick(teacher.bio, teacher.bioAr)}
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-2">
@@ -127,7 +130,26 @@ function TeacherProfile() {
                       key={m}
                       className="rounded-xl bg-brand-soft px-3 py-1 text-xs font-semibold text-secondary-foreground"
                     >
-                      {MODE_LABEL[m]}
+                      {L(MODE_LABEL[m])}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {teacher.curricula.map((c) => (
+                    <span
+                      key={c}
+                      className="rounded-xl bg-muted px-3 py-1 text-xs font-semibold text-foreground/80"
+                    >
+                      {L(CURRICULUM_LABEL[c])}
+                    </span>
+                  ))}
+                  {teacher.grades.map((g) => (
+                    <span
+                      key={g}
+                      className="rounded-xl border border-border px-3 py-1 text-xs font-medium text-muted-foreground"
+                    >
+                      {L(GRADE_LABEL[g])}
                     </span>
                   ))}
                 </div>
@@ -287,7 +309,7 @@ function TeacherProfile() {
                 <CalendarDays size={18} className="text-primary" /> Pick a slot
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {teacher.pricePerSession} JD per session
+                {teacher.pricePerSession.toLocaleString()} {t("per_session")}
               </p>
               <div className="mt-4 space-y-3">
                 {teacher.slots.map((d) => (

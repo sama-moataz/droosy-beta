@@ -24,7 +24,7 @@ export const Route = createFileRoute("/schedule")({
       },
     ],
   }),
-  component: Schedule;
+  component: Schedule,
 });
 
 function Schedule() {

@@ -157,19 +157,103 @@ export type Database = {
           },
         ]
       }
-      teachers: {
+      teacher_applications: {
         Row: {
-          accent: string
           area: string
           bio: string
           center_address: string
           center_name: string
           created_at: string
+          credential_document_path: string | null
+          curricula: string[]
+          full_name: string
+          full_name_ar: string
+          governorate: string
+          grades: string[]
+          id: string
+          id_document_path: string | null
+          modes: string[]
+          national_id_last4: string
+          phone: string
+          platform_url: string | null
+          price_per_session: number
+          review_note: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          bio?: string
+          center_address?: string
+          center_name?: string
+          created_at?: string
+          credential_document_path?: string | null
+          curricula?: string[]
+          full_name: string
+          full_name_ar?: string
+          governorate: string
+          grades?: string[]
+          id?: string
+          id_document_path?: string | null
+          modes?: string[]
+          national_id_last4?: string
+          phone: string
+          platform_url?: string | null
+          price_per_session?: number
+          review_note?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          bio?: string
+          center_address?: string
+          center_name?: string
+          created_at?: string
+          credential_document_path?: string | null
+          curricula?: string[]
+          full_name?: string
+          full_name_ar?: string
+          governorate?: string
+          grades?: string[]
+          id?: string
+          id_document_path?: string | null
+          modes?: string[]
+          national_id_last4?: string
+          phone?: string
+          platform_url?: string | null
+          price_per_session?: number
+          review_note?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      teachers: {
+        Row: {
+          accent: string
+          area: string
+          bio: string
+          bio_ar: string
+          center_address: string
+          center_name: string
+          created_at: string
+          curricula: string[]
+          grades: string[]
           id: string
           manasa: string | null
           map_query: string
           modes: string[]
           name: string
+          name_ar: string
+          owner_id: string | null
+          platform_url: string | null
           price_per_session: number
           rating: number
           region: string
@@ -177,20 +261,27 @@ export type Database = {
           sort: number
           students: number
           subject: string
+          verified: boolean
           youtube: string | null
         }
         Insert: {
           accent?: string
           area: string
           bio?: string
+          bio_ar?: string
           center_address: string
           center_name: string
           created_at?: string
+          curricula?: string[]
+          grades?: string[]
           id: string
           manasa?: string | null
           map_query: string
           modes?: string[]
           name: string
+          name_ar?: string
+          owner_id?: string | null
+          platform_url?: string | null
           price_per_session?: number
           rating?: number
           region: string
@@ -198,20 +289,27 @@ export type Database = {
           sort?: number
           students?: number
           subject: string
+          verified?: boolean
           youtube?: string | null
         }
         Update: {
           accent?: string
           area?: string
           bio?: string
+          bio_ar?: string
           center_address?: string
           center_name?: string
           created_at?: string
+          curricula?: string[]
+          grades?: string[]
           id?: string
           manasa?: string | null
           map_query?: string
           modes?: string[]
           name?: string
+          name_ar?: string
+          owner_id?: string | null
+          platform_url?: string | null
           price_per_session?: number
           rating?: number
           region?: string
@@ -219,6 +317,7 @@ export type Database = {
           sort?: number
           students?: number
           subject?: string
+          verified?: boolean
           youtube?: string | null
         }
         Relationships: []

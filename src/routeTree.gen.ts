@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as ScheduleRouteImport } from './routes/schedule'
+import { Route as TeachRouteImport } from './routes/teach'
 import { Route as TeacherTeacherIdRouteImport } from './routes/teacher.$teacherId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const ScheduleRoute = ScheduleRouteImport.update({
   path: '/schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeachRoute = TeachRouteImport.update({
+  id: '/teach',
+  path: '/teach',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeacherTeacherIdRoute = TeacherTeacherIdRouteImport.update({
   id: '/teacher/$teacherId',
   path: '/teacher/$teacherId',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
+  '/teach': typeof TeachRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
+  '/teach': typeof TeachRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,23 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
+  '/teach': typeof TeachRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/packages' | '/schedule' | '/teacher/$teacherId'
+  fullPaths:
+    '/' | '/auth' | '/packages' | '/schedule' | '/teach' | '/teacher/$teacherId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/packages' | '/schedule' | '/teacher/$teacherId'
+  to:
+    '/' | '/auth' | '/packages' | '/schedule' | '/teach' | '/teacher/$teacherId'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/packages'
     | '/schedule'
+    | '/teach'
     | '/teacher/$teacherId'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +94,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PackagesRoute: typeof PackagesRoute
   ScheduleRoute: typeof ScheduleRoute
+  TeachRoute: typeof TeachRoute
   TeacherTeacherIdRoute: typeof TeacherTeacherIdRoute
 }
 
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teach': {
+      id: '/teach'
+      path: '/teach'
+      fullPath: '/teach'
+      preLoaderRoute: typeof TeachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teacher/$teacherId': {
       id: '/teacher/$teacherId'
       path: '/teacher/$teacherId'
@@ -130,18 +150,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PackagesRoute: PackagesRoute,
   ScheduleRoute: ScheduleRoute,
+  TeachRoute: TeachRoute,
   TeacherTeacherIdRoute: TeacherTeacherIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

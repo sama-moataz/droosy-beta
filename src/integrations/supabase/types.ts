@@ -14,7 +14,215 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          bundle_id: string | null
+          created_at: string
+          day: string
+          id: string
+          teacher_id: string
+          time: string
+          user_id: string
+        }
+        Insert: {
+          bundle_id?: string | null
+          created_at?: string
+          day: string
+          id?: string
+          teacher_id: string
+          time: string
+          user_id: string
+        }
+        Update: {
+          bundle_id?: string | null
+          created_at?: string
+          day?: string
+          id?: string
+          teacher_id?: string
+          time?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundles: {
+        Row: {
+          accent: string
+          created_at: string
+          discount: number
+          id: string
+          sort: number
+          tagline: string
+          teacher_ids: string[]
+          title: string
+        }
+        Insert: {
+          accent?: string
+          created_at?: string
+          discount?: number
+          id: string
+          sort?: number
+          tagline: string
+          teacher_ids?: string[]
+          title: string
+        }
+        Update: {
+          accent?: string
+          created_at?: string
+          discount?: number
+          id?: string
+          sort?: number
+          tagline?: string
+          teacher_ids?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          role: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          role?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          rating: number
+          student_name: string
+          teacher_id: string
+          user_id: string | null
+          verified: boolean
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          rating: number
+          student_name: string
+          teacher_id: string
+          user_id?: string | null
+          verified?: boolean
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          student_name?: string
+          teacher_id?: string
+          user_id?: string | null
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          accent: string
+          area: string
+          bio: string
+          center_address: string
+          center_name: string
+          created_at: string
+          id: string
+          manasa: string | null
+          map_query: string
+          modes: string[]
+          name: string
+          price_per_session: number
+          rating: number
+          region: string
+          slots: Json
+          sort: number
+          students: number
+          subject: string
+          youtube: string | null
+        }
+        Insert: {
+          accent?: string
+          area: string
+          bio?: string
+          center_address: string
+          center_name: string
+          created_at?: string
+          id: string
+          manasa?: string | null
+          map_query: string
+          modes?: string[]
+          name: string
+          price_per_session?: number
+          rating?: number
+          region: string
+          slots?: Json
+          sort?: number
+          students?: number
+          subject: string
+          youtube?: string | null
+        }
+        Update: {
+          accent?: string
+          area?: string
+          bio?: string
+          center_address?: string
+          center_name?: string
+          created_at?: string
+          id?: string
+          manasa?: string | null
+          map_query?: string
+          modes?: string[]
+          name?: string
+          price_per_session?: number
+          rating?: number
+          region?: string
+          slots?: Json
+          sort?: number
+          students?: number
+          subject?: string
+          youtube?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

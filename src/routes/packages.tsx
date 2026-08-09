@@ -139,7 +139,7 @@ function Packages() {
                   </div>
                   <Button
                     className="mt-4 w-full"
-                    onClick={() => bookAll(b.teacherIds, b.id)}
+                    onClick={() => void bookAll(b.teacherIds, b.id)}
                   >
                     <Sparkles size={15} /> Book the whole bundle
                   </Button>
@@ -242,7 +242,7 @@ function Packages() {
                 className="mt-5 w-full"
                 disabled={picked.length === 0}
                 onClick={() => {
-                  bookAll(cart, "custom");
+                  void bookAll(cart, "custom");
                   clearCart();
                 }}
               >

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Clock, MapPin, Trash2 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
-import { getTeacher, initials } from "@/lib/droosy-data";
+import { initials } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/schedule")({
 });
 
 function Schedule() {
-  const { bookings, removeBooking } = useDroosy();
+  const { bookings, removeBooking, getTeacher } = useDroosy();
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,7 +108,7 @@ function Schedule() {
                             </Link>
                             <button
                               aria-label="Cancel session"
-                              onClick={() => removeBooking(b.id)}
+                              onClick={() => void removeBooking(b.id)}
                               className="text-muted-foreground hover:text-destructive"
                             >
                               <Trash2 size={13} />

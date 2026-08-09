@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { Stars } from "@/components/droosy/Stars";
-import { MODE_LABEL, getTeacher, initials, type Teacher } from "@/lib/droosy-data";
+import { MODE_LABEL, initials, type Teacher } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,8 +27,9 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/teacher/$teacherId")({
-  loader: ({ params }) => {
-    const teacher = getTeacher(params.teacherId);
+  loader: async ({ params, context }) => {
+    const catalog = await context.getCatalog();
+    const teacher = catalog.teachers.find((t) => t.id === params.teacherId);
     if (!teacher) throw notFound();
     return { teacher };
   },
@@ -57,7 +58,8 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 
 function TeacherProfile() {
   const { teacher } = Route.useLoaderData() as { teacher: Teacher };
-  const { reviews, addReview, addBooking, cart, toggleCart } = useDroosy();
+  const { reviews, addReview, addBooking, cart, toggleCart, user } =
+    useDroosy();
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");
@@ -220,16 +222,25 @@ function TeacherProfile() {
                             toast.error("Please write a short review first.");
                             return;
                           }
-                          addReview({
+                          void addReview({
                             teacherId: teacher.id,
                             student: student.trim() || "Anonymous student",
                             rating,
                             text: text.trim(),
+                          }).then((res) => {
+                            if (res === "auth") {
+                              toast.error("Sign in to publish a review.");
+                              return;
+                            }
+                            if (res !== "ok") {
+                              toast.error("Could not publish your review.");
+                              return;
+                            }
+                            setText("");
+                            setStudent("");
+                            setOpen(false);
+                            toast.success("Thanks! Your review is published.");
                           });
-                          setText("");
-                          setStudent("");
-                          setOpen(false);
-                          toast.success("Thanks! Your review is published.");
                         }}
                       >
                         Publish review
@@ -312,19 +323,22 @@ function TeacherProfile() {
                     toast.error("Choose a day and time first.");
                     return;
                   }
-                  const res = addBooking({
+                  void addBooking({
                     teacherId: teacher.id,
                     day: slot.day,
                     time: slot.time,
+                  }).then((res) => {
+                    if (res === "auth")
+                      toast.error("Sign in to book a session.");
+                    else if (res !== "ok")
+                      toast.error(
+                        `You already have a class on ${slot.day} at ${slot.time}.`,
+                      );
+                    else
+                      toast.success(
+                        `Booked ${slot.day} ${slot.time} with ${teacher.name}.`,
+                      );
                   });
-                  if (res === "conflict")
-                    toast.error(
-                      `You already have a class on ${slot.day} at ${slot.time}.`,
-                    );
-                  else
-                    toast.success(
-                      `Booked ${slot.day} ${slot.time} with ${teacher.name}.`,
-                    );
                 }}
               >
                 Book this session

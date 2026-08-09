@@ -6,11 +6,8 @@ import { Header, Footer } from "@/components/droosy/Chrome";
 import { TeacherCard } from "@/components/droosy/TeacherCard";
 import {
   AREAS,
-  BUNDLES,
   MODE_LABEL,
   SUBJECTS,
-  TEACHERS,
-  getTeacher,
   type Mode,
 } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
@@ -49,14 +46,20 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { q } = Route.useSearch();
-  const { location, setLocation } = useDroosy();
+  const {
+    location,
+    setLocation,
+    teachers: allTeachers,
+    bundles: BUNDLES,
+    getTeacher,
+  } = useDroosy();
   const [query, setQuery] = useState(q ?? "");
   const [subject, setSubject] = useState<string>("All subjects");
   const [mode, setMode] = useState<string>("All modes");
 
   const teachers = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return TEACHERS.filter((t) => {
+    return allTeachers.filter((t) => {
       if (subject !== "All subjects" && t.subject !== subject) return false;
       if (location !== "All areas" && t.area !== location) return false;
       if (mode !== "All modes" && !t.modes.includes(mode as Mode)) return false;

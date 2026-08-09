@@ -72,7 +72,7 @@ function Home() {
         return false;
       return true;
     });
-  }, [query, subject, location, mode]);
+  }, [allTeachers, query, subject, location, mode]);
 
   return (
     <div className="min-h-screen bg-background">

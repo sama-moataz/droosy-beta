@@ -6,7 +6,7 @@ export type Booking = {
   teacherId: string;
   day: string;
   time: string;
-  bundleId?: string;
+  bundleId?: string | undefined;
 };
 
 type Store = {

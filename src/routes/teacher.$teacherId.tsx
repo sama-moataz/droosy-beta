@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { Stars } from "@/components/droosy/Stars";
-import { MODE_LABEL, getTeacher, initials } from "@/lib/droosy-data";
+import { MODE_LABEL, getTeacher, initials, type Teacher } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 });
 
 function TeacherProfile() {
-  const { teacher } = Route.useLoaderData();
+  const { teacher } = Route.useLoaderData() as { teacher: Teacher };
   const { reviews, addReview, addBooking, cart, toggleCart } = useDroosy();
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
   const [rating, setRating] = useState(5);

@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, MapPin, Search, Layers } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  MapPin,
+  Search,
+  Layers,
+  LogOut,
+} from "lucide-react";
+import { initials } from "@/lib/droosy-data";
 import { AREAS } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import {
@@ -14,7 +22,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 export function Header() {
-  const { location, setLocation, cart, bookings } = useDroosy();
+  const { location, setLocation, cart, bookings, user, profile, signOut } =
+    useDroosy();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
 
@@ -92,9 +101,35 @@ export function Header() {
               </span>
             )}
           </Link>
-          <span className="ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-400 text-sm font-bold text-primary-foreground">
-            R
-          </span>
+          {user ? (
+            <div className="ml-1 flex items-center gap-1.5">
+              <span
+                title={profile?.fullName || user.email || ""}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-400 text-sm font-bold text-primary-foreground"
+              >
+                {profile?.fullName
+                  ? initials(profile.fullName)
+                  : (user.email ?? "?").slice(0, 1).toUpperCase()}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  void signOut();
+                }}
+                aria-label="Sign out"
+                className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/auth"
+              className="ml-1 rounded-xl gradient-brand px-3.5 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              Sign in
+            </Link>
+          )}
         </nav>
       </div>
     </header>

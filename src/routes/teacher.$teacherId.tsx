@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { Stars } from "@/components/droosy/Stars";
 import { MODE_LABEL, initials, type Teacher } from "@/lib/droosy-data";
+import { getCatalog } from "@/lib/droosy.functions";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,8 +28,8 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/teacher/$teacherId")({
-  loader: async ({ params, context }) => {
-    const catalog = await context.getCatalog();
+  loader: async ({ params }) => {
+    const catalog = await getCatalog();
     const teacher = catalog.teachers.find((t) => t.id === params.teacherId);
     if (!teacher) throw notFound();
     return { teacher };
@@ -58,8 +59,7 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 
 function TeacherProfile() {
   const { teacher } = Route.useLoaderData() as { teacher: Teacher };
-  const { reviews, addReview, addBooking, cart, toggleCart, user } =
-    useDroosy();
+  const { reviews, addReview, addBooking, cart, toggleCart } = useDroosy();
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");

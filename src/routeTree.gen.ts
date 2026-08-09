@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as TeacherTeacherIdRouteImport } from './routes/teacher.$teacherId'
@@ -17,6 +18,11 @@ import { Route as TeacherTeacherIdRouteImport } from './routes/teacher.$teacherI
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PackagesRoute = PackagesRouteImport.update({
@@ -37,12 +43,14 @@ const TeacherTeacherIdRoute = TeacherTeacherIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/packages': typeof PackagesRoute
   '/schedule': typeof ScheduleRoute
   '/teacher/$teacherId': typeof TeacherTeacherIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/packages' | '/schedule' | '/teacher/$teacherId'
+  fullPaths: '/' | '/auth' | '/packages' | '/schedule' | '/teacher/$teacherId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/packages' | '/schedule' | '/teacher/$teacherId'
-  id: '__root__' | '/' | '/packages' | '/schedule' | '/teacher/$teacherId'
+  to: '/' | '/auth' | '/packages' | '/schedule' | '/teacher/$teacherId'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/packages'
+    | '/schedule'
+    | '/teacher/$teacherId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   PackagesRoute: typeof PackagesRoute
   ScheduleRoute: typeof ScheduleRoute
   TeacherTeacherIdRoute: typeof TeacherTeacherIdRoute
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/packages': {
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   PackagesRoute: PackagesRoute,
   ScheduleRoute: ScheduleRoute,
   TeacherTeacherIdRoute: TeacherTeacherIdRoute,

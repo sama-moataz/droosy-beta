@@ -54,15 +54,15 @@ function AuthPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const mail = emailSchema.safeParse(email);
-    if (!mail.success) return toast.error(mail.error.issues[0]!.message);
+    if (!mail.success) { toast.error(mail.error.issues[0]!.message); return; }
     const pass = passwordSchema.safeParse(password);
-    if (!pass.success) return toast.error(pass.error.issues[0]!.message);
+    if (!pass.success) { toast.error(pass.error.issues[0]!.message); return; }
 
     setBusy(true);
     try {
       if (mode === "signup") {
         const name = nameSchema.safeParse(fullName);
-        if (!name.success) return toast.error(name.error.issues[0]!.message);
+        if (!name.success) { toast.error(name.error.issues[0]!.message); return; }
         const { data, error } = await supabase.auth.signUp({
           email: mail.data,
           password: pass.data,
@@ -71,7 +71,7 @@ function AuthPage() {
             data: { full_name: name.data, role },
           },
         });
-        if (error) return toast.error(error.message);
+        if (error) { toast.error(error.message); return; }
         if (!data.session) {
           setSent(true);
           return;
@@ -84,7 +84,7 @@ function AuthPage() {
           email: mail.data,
           password: pass.data,
         });
-        if (error) return toast.error(error.message);
+        if (error) { toast.error(error.message); return; }
         toast.success("Signed in.");
         router.invalidate();
         void navigate({ to: "/", replace: true });

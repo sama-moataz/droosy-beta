@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Check, Layers, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
-import { BUNDLES, TEACHERS, getTeacher, initials } from "@/lib/droosy-data";
+import { initials } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 
@@ -28,18 +28,26 @@ export const Route = createFileRoute("/packages")({
 });
 
 function Packages() {
-  const { cart, toggleCart, clearCart, addBookings } = useDroosy();
+  const {
+    cart,
+    toggleCart,
+    clearCart,
+    addBookings,
+    teachers: TEACHERS,
+    bundles: BUNDLES,
+    getTeacher,
+  } = useDroosy();
   const [openBundle, setOpenBundle] = useState<string | null>(null);
 
   const picked = useMemo(
     () => cart.map((id) => getTeacher(id)).filter(Boolean),
-    [cart],
+    [cart, getTeacher],
   );
   const subtotal = picked.reduce((s, t) => s + (t?.pricePerSession ?? 0), 0);
   const discount = picked.length >= 3 ? 0.2 : picked.length === 2 ? 0.1 : 0;
   const total = Math.round(subtotal * (1 - discount) * 100) / 100;
 
-  const bookAll = (ids: string[], bundleId?: string) => {
+  const bookAll = async (ids: string[], bundleId?: string) => {
     const wanted = ids
       .map((id) => getTeacher(id))
       .filter((t): t is NonNullable<typeof t> => Boolean(t))
@@ -47,7 +55,11 @@ function Packages() {
         const day = t.slots[0]!;
         return { teacherId: t.id, day: day.day, time: day.times[0]!, bundleId };
       });
-    const added = addBookings(wanted);
+    const added = await addBookings(wanted);
+    if (added === "auth") {
+      toast.error("Sign in to book a package.");
+      return;
+    }
     if (added === 0)
       toast.error("All those slots clash with classes you already booked.");
     else

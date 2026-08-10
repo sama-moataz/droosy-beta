@@ -4,6 +4,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Teacher/bundle accent gradients come from the database, so they never appear
+   as literal class names in source — keep them in the build. */
+@source inline("bg-gradient-to-br from-{violet,fuchsia,blue,rose,cyan,amber,teal,sky,indigo,emerald,lime,orange}-{500,600} to-{fuchsia,indigo,pink,blue,orange,cyan,amber,sky,teal,emerald,rose}-400");
+
+
 /*
  * Design system definition.
  *

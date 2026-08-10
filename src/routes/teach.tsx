@@ -203,6 +203,7 @@ function TeachPage() {
       return;
     }
     setBusy(true);
+    await freshSession();
     try {
       const [idPath, credPath] = await Promise.all([
         upload(idFile, "national-id"),

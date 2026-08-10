@@ -1,12 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  MapPin,
-  Users,
-  MonitorPlay,
-  Plus,
-  Check,
-  BadgeCheck,
-} from "lucide-react";
+import { MapPin, Users, MonitorPlay, Plus, Check, BadgeCheck } from "lucide-react";
 import { Stars } from "./Stars";
 import {
   initials,
@@ -39,9 +32,7 @@ export function TeacherCard({ teacher }: { teacher: Teacher }) {
           <div className="min-w-0">
             <h3 className="flex items-center gap-1.5 truncate text-base font-bold text-foreground">
               <span className="truncate">{pick(teacher.name, teacher.nameAr)}</span>
-              {teacher.verified && (
-                <BadgeCheck size={15} className="shrink-0 text-primary" />
-              )}
+              {teacher.verified && <BadgeCheck size={15} className="shrink-0 text-primary" />}
             </h3>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
@@ -72,9 +63,7 @@ export function TeacherCard({ teacher }: { teacher: Teacher }) {
 
         <div className="flex items-center gap-2">
           <Stars value={teacher.rating} />
-          <span className="text-sm font-semibold text-foreground">
-            {teacher.rating.toFixed(1)}
-          </span>
+          <span className="text-sm font-semibold text-foreground">{teacher.rating.toFixed(1)}</span>
         </div>
 
         <div className="flex flex-wrap gap-1.5">

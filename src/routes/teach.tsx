@@ -147,11 +147,8 @@ function TeachPage() {
     };
   }, [user, teacherId]);
 
-  const toggle = <T extends string>(
-    value: T,
-    list: T[],
-    set: (v: T[]) => void,
-  ) => set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
+  const toggle = <T extends string>(value: T, list: T[], set: (v: T[]) => void) =>
+    set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
 
   const freshSession = async () => {
     const { data } = await supabase.auth.getSession();
@@ -300,7 +297,7 @@ function TeachPage() {
           </div>
         )}
 
-        {user && !teacherId && (
+        {user && !teacherId && status !== "pending" && (
           <form onSubmit={submit} className="mt-8 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -309,11 +306,21 @@ function TeachPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="fna">{t("full_name_ar")}</Label>
-                <Input id="fna" value={fullNameAr} onChange={(e) => setFullNameAr(e.target.value)} />
+                <Input
+                  id="fna"
+                  value={fullNameAr}
+                  onChange={(e) => setFullNameAr(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ph">{t("phone")}</Label>
-                <Input id="ph" inputMode="tel" placeholder="010xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Input
+                  id="ph"
+                  inputMode="tel"
+                  placeholder="010xxxxxxxx"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>{t("subject")}</Label>
@@ -355,15 +362,28 @@ function TeachPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ca">{t("center_address")}</Label>
-                <Input id="ca" value={centerAddress} onChange={(e) => setCenterAddress(e.target.value)} />
+                <Input
+                  id="ca"
+                  value={centerAddress}
+                  onChange={(e) => setCenterAddress(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="pu">{t("platform_url")}</Label>
-                <Input id="pu" value={platformUrl} onChange={(e) => setPlatformUrl(e.target.value)} />
+                <Input
+                  id="pu"
+                  value={platformUrl}
+                  onChange={(e) => setPlatformUrl(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="pr">{t("price")}</Label>
-                <Input id="pr" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} />
+                <Input
+                  id="pr"
+                  inputMode="numeric"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
               </div>
             </div>
 
@@ -406,9 +426,7 @@ function TeachPage() {
               <h2 className="flex items-center gap-2 text-base font-extrabold text-foreground">
                 <ShieldCheck size={18} className="text-primary" /> {t("id_verification")}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("id_verification_sub")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("id_verification_sub")}</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="l4">{t("national_id_last4")}</Label>
@@ -442,11 +460,7 @@ function TeachPage() {
             </section>
 
             <Button type="submit" size="lg" disabled={busy} className="w-full">
-              {busy ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Upload size={16} />
-              )}
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               {t("submit_application")}
             </Button>
           </form>

@@ -129,7 +129,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, "")
           .slice(0, 40) || "teacher";
-      
+
       const teacherId = existingTeachers?.[0]?.id || `${slug}-${app.id.slice(0, 6)}`;
 
       const { error: upErr } = await supabaseAdmin.from("teachers").upsert(
@@ -159,10 +159,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
       );
       if (upErr) throw upErr;
 
-      await supabaseAdmin
-        .from("profiles")
-        .update({ role: "teacher" })
-        .eq("id", app.user_id);
+      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", app.user_id);
     }
 
     const { error: statusErr } = await supabaseAdmin
@@ -172,4 +169,115 @@ export const reviewApplication = createServerFn({ method: "POST" })
     if (statusErr) throw statusErr;
 
     return { ok: true };
+  });
+
+// ─── Admin direct "Add Teacher" ───────────────────────────────────────────────
+// Completely separate from the teacher-application self-service flow.
+// Creates a teacher record directly via supabaseAdmin (service-role, server-only).
+// If ownerEmail is provided, it resolves to a user id and sets owner_id; if that
+// owner already has a teacher row, the existing row is updated instead of creating
+// a duplicate. owner_id is nullable — admin can create teachers without a platform
+// user account.
+
+export const adminCreateTeacher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        fullName: z.string().trim().min(2).max(90),
+        fullNameAr: z.string().trim().max(90).optional().default(""),
+        phone: z.string().trim().max(20).optional().default(""),
+        subject: z.string().min(1),
+        governorate: z.string().min(1),
+        area: z.string().trim().min(1).max(90),
+        centerName: z.string().trim().max(200).optional().default(""),
+        centerAddress: z.string().trim().max(300).optional().default(""),
+        platformUrl: z.string().trim().max(500).optional().default(""),
+        pricePerSession: z.number().min(0).max(100000),
+        bio: z.string().trim().max(1200).optional().default(""),
+        modes: z.array(z.string()).min(1),
+        curricula: z.array(z.string()).min(1),
+        grades: z.array(z.string()).min(1),
+        ownerEmail: z.string().email().optional().or(z.literal("")),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    // ── Enforce admin role on the server ──
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (admin !== true) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // ── Resolve owner_id from email if provided ──
+    let ownerId: string | null = null;
+    if (data.ownerEmail) {
+      // listUsers is a server-only admin API; never exposed to the client.
+      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+      if (listErr) throw new Error("Failed to look up user accounts");
+      const match = userList.users.find(
+        (u) => u.email?.toLowerCase() === data.ownerEmail!.toLowerCase(),
+      );
+      if (!match) throw new Error(`No user account found for ${data.ownerEmail}`);
+      ownerId = match.id;
+    }
+
+    // ── Duplicate prevention: if owner already has a teacher, update it ──
+    let existingTeacherId: string | null = null;
+    if (ownerId) {
+      const { data: existing } = await supabaseAdmin
+        .from("teachers")
+        .select("id")
+        .eq("owner_id", ownerId)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        existingTeacherId = existing[0]?.id || null;
+      }
+    }
+
+    const slug =
+      data.fullName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40) || "teacher";
+
+    const teacherId = existingTeacherId || `${slug}-${crypto.randomUUID().slice(0, 6)}`;
+
+    const { error: upErr } = await supabaseAdmin.from("teachers").upsert(
+      {
+        id: teacherId,
+        owner_id: ownerId,
+        name: data.fullName,
+        name_ar: data.fullNameAr || "",
+        subject: data.subject,
+        area: data.area,
+        region: data.governorate,
+        center_name: data.centerName || "",
+        center_address: data.centerAddress || "",
+        map_query: [data.centerName, data.area, data.governorate, "Egypt"]
+          .filter(Boolean)
+          .join(", "),
+        modes: data.modes,
+        curricula: data.curricula,
+        grades: data.grades,
+        price_per_session: data.pricePerSession,
+        bio: data.bio || "",
+        bio_ar: "",
+        platform_url: data.platformUrl || null,
+        verified: true,
+      },
+      { onConflict: "id" },
+    );
+    if (upErr) throw upErr;
+
+    // If we resolved an owner, also mark their profile as "teacher"
+    if (ownerId) {
+      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
+    }
+
+    return { ok: true, teacherId };
   });

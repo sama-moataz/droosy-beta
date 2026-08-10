@@ -60,24 +60,18 @@ function Packages() {
       toast.error("Sign in to book a package.");
       return;
     }
-    if (added === 0)
-      toast.error("All those slots clash with classes you already booked.");
-    else
-      toast.success(
-        `${added} session${added === 1 ? "" : "s"} added to your schedule.`,
-      );
+    if (added === 0) toast.error("All those slots clash with classes you already booked.");
+    else toast.success(`${added} session${added === 1 ? "" : "s"} added to your schedule.`);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-10">
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          All-in-One Packages
-        </h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">All-in-One Packages</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Choose a ready bundle, or build your own mix of teachers across
-          subjects. Two subjects save 10%, three or more save 20%.
+          Choose a ready bundle, or build your own mix of teachers across subjects. Two subjects
+          save 10%, three or more save 20%.
         </p>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -119,9 +113,7 @@ function Packages() {
                               {initials(t.name)}
                             </span>
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold">
-                                {t.name}
-                              </span>
+                              <span className="block truncate text-sm font-semibold">{t.name}</span>
                               <span className="block text-xs text-muted-foreground">
                                 {t.subject} · {t.area}
                               </span>
@@ -137,10 +129,7 @@ function Packages() {
                       {raw} EGP
                     </span>
                   </div>
-                  <Button
-                    className="mt-4 w-full"
-                    onClick={() => void bookAll(b.teacherIds, b.id)}
-                  >
+                  <Button className="mt-4 w-full" onClick={() => void bookAll(b.teacherIds, b.id)}>
                     <Sparkles size={15} /> Book the whole bundle
                   </Button>
                 </div>
@@ -176,9 +165,7 @@ function Packages() {
                       {initials(t.name)}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold">
-                        {t.name}
-                      </span>
+                      <span className="block truncate text-sm font-bold">{t.name}</span>
                       <span className="block text-xs text-muted-foreground">
                         {t.subject} · {t.pricePerSession} EGP
                       </span>
@@ -195,8 +182,7 @@ function Packages() {
               <h3 className="text-lg font-extrabold">Your package</h3>
               {picked.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Nothing added yet. Pick at least two subjects to unlock a
-                  discount.
+                  Nothing added yet. Pick at least two subjects to unlock a discount.
                 </p>
               ) : (
                 <ul className="mt-4 space-y-2">
@@ -208,9 +194,7 @@ function Packages() {
                       <span className="min-w-0 truncate font-medium">
                         {t!.subject} — {t!.name}
                       </span>
-                      <span className="text-muted-foreground">
-                        {t!.pricePerSession} EGP
-                      </span>
+                      <span className="text-muted-foreground">{t!.pricePerSession} EGP</span>
                       <button
                         aria-label="Remove"
                         onClick={() => toggleCart(t!.id)}

@@ -5,15 +5,7 @@ import { initials } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 
-const DAYS = [
-  "Saturday",
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-];
+const DAYS = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
@@ -27,8 +19,7 @@ export const Route = createFileRoute("/schedule")({
       { property: "og:title", content: "My Schedule — Droosy" },
       {
         property: "og:description",
-        content:
-          "One weekly timetable for all your teachers, centers and online sessions.",
+        content: "One weekly timetable for all your teachers, centers and online sessions.",
       },
     ],
   }),
@@ -66,7 +57,21 @@ function Schedule() {
             {DAYS.map((day) => {
               const items = bookings
                 .filter((b) => b.day.slice(0, 3).toLowerCase() === day.slice(0, 3).toLowerCase())
-                .sort((a, b) => a.time.localeCompare(b.time));
+                .sort((a, b) => {
+                  const parseTime = (t: string) => {
+                    const parts = t.split(" ");
+                    const timeStr = parts[0];
+                    const modifier = parts[1];
+                    const timeParts = timeStr?.split(":") ?? [];
+                    const h = Number(timeParts[0] ?? 0);
+                    const m = Number(timeParts[1] ?? 0);
+                    let hours = h;
+                    if (hours === 12) hours = 0;
+                    if (modifier === "PM") hours += 12;
+                    return hours * 60 + m;
+                  };
+                  return parseTime(a.time) - parseTime(b.time);
+                });
               return (
                 <section key={day} className="rounded-3xl bg-muted/50 p-4">
                   <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
@@ -91,12 +96,8 @@ function Schedule() {
                               {initials(t.name)}
                             </span>
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-bold">
-                                {t.subject}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {t.name}
-                              </p>
+                              <p className="truncate text-sm font-bold">{t.subject}</p>
+                              <p className="truncate text-xs text-muted-foreground">{t.name}</p>
                             </div>
                           </div>
                           <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-primary">

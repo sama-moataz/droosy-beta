@@ -17,8 +17,7 @@ type RedirectTarget = (typeof ALLOWED_REDIRECTS)[number];
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: RedirectTarget } => {
     const r = search["redirect"];
-    return typeof r === "string" &&
-      (ALLOWED_REDIRECTS as readonly string[]).includes(r)
+    return typeof r === "string" && (ALLOWED_REDIRECTS as readonly string[]).includes(r)
       ? { redirect: r as RedirectTarget }
       : {};
   },
@@ -41,14 +40,12 @@ export const Route = createFileRoute("/auth")({
 });
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
-const passwordSchema = z
-  .string()
-  .min(6, "Password must be at least 6 characters")
-  .max(72);
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
 const nameSchema = z.string().trim().min(2, "Enter your name").max(80);
 
 function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [accountType, setAccountType] = useState<"student" | "teacher">("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -67,27 +64,41 @@ function AuthPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const mail = emailSchema.safeParse(email);
-    if (!mail.success) { toast.error(mail.error.issues[0]!.message); return; }
+    if (!mail.success) {
+      toast.error(mail.error.issues[0]!.message);
+      return;
+    }
     const pass = passwordSchema.safeParse(password);
-    if (!pass.success) { toast.error(pass.error.issues[0]!.message); return; }
+    if (!pass.success) {
+      toast.error(pass.error.issues[0]!.message);
+      return;
+    }
 
     setBusy(true);
     try {
       if (mode === "signup") {
         const name = nameSchema.safeParse(fullName);
-        if (!name.success) { toast.error(name.error.issues[0]!.message); return; }
+        if (!name.success) {
+          toast.error(name.error.issues[0]!.message);
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email: mail.data,
           password: pass.data,
           options: {
             emailRedirectTo: window.location.origin,
-            // Note: there is intentionally no "role" here. Becoming a teacher on Droosy only
-            // happens through the "Teach on Droosy" application + admin verification flow, not
-            // by self-selecting a role at signup — every new account starts as a student.
-            data: { full_name: name.data },
+            // Note: the backend trigger may use this 'role' metadata to populate the profiles table.
+            data: { full_name: name.data, role: accountType },
           },
         });
-        if (error) { toast.error(error.message); return; }
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+        // Attempt to eagerly update the profile if a session was returned and RLS permits it.
+        if (data.session && data.user) {
+          await supabase.from("profiles").update({ role: accountType }).eq("id", data.user.id);
+        }
         if (!data.session) {
           setSent(true);
           return;
@@ -100,7 +111,10 @@ function AuthPage() {
           email: mail.data,
           password: pass.data,
         });
-        if (error) { toast.error(error.message); return; }
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
         toast.success("Signed in.");
         router.invalidate();
         void navigate({ to: destination, replace: true });
@@ -125,8 +139,8 @@ function AuthPage() {
             <div className="text-center">
               <h1 className="text-xl font-extrabold">Check your inbox</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                We sent a confirmation link to <strong>{email}</strong>. Open it to
-                activate your account, then come back and sign in.
+                We sent a confirmation link to <strong>{email}</strong>. Open it to activate your
+                account, then come back and sign in.
               </p>
               <Button
                 variant="outline"
@@ -152,17 +166,47 @@ function AuthPage() {
 
               <form className="mt-6 space-y-4" onSubmit={submit}>
                 {mode === "signup" && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fullName">Full name</Label>
-                    <Input
-                      id="fullName"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Rokaya Ahmad"
-                      maxLength={80}
-                      autoComplete="name"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-3">
+                      <Label>I want to use Droosy as a</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setAccountType("student")}
+                          className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-colors ${
+                            accountType === "student"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-card text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          Student
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAccountType("teacher")}
+                          className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-colors ${
+                            accountType === "teacher"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-card text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          Teacher
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="fullName">Full name</Label>
+                      <Input
+                        id="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Rokaya Ahmad"
+                        maxLength={80}
+                        autoComplete="name"
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div className="space-y-1.5">
@@ -186,9 +230,7 @@ function AuthPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    autoComplete={
-                      mode === "signin" ? "current-password" : "new-password"
-                    }
+                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
                   />
                 </div>
 

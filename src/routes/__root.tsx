@@ -81,10 +81,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Droosy — Find all your teachers in one place" },
-      { name: "description", content: "Droosy connects students with private teachers, centers and online Manasa platforms, with ratings, bundles and one shared schedule." },
+      {
+        name: "description",
+        content:
+          "Droosy connects students with private teachers, centers and online Manasa platforms, with ratings, bundles and one shared schedule.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Droosy — Find all your teachers in one place" },
-      { property: "og:description", content: "Teachers, centers and online platforms in one calm, organized place." },
+      {
+        property: "og:description",
+        content: "Teachers, centers and online platforms in one calm, organized place.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -137,7 +144,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <DroosyProvider catalog={catalog}>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <Toaster position="top-center" />
         </DroosyProvider>

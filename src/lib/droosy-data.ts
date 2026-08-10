@@ -1,12 +1,6 @@
 export type Mode = "center" | "home" | "online" | "manasa";
 export type Curriculum = "thanaweya" | "bakalorya" | "igcse" | "ib" | "american";
-export type Grade =
-  | "prep1"
-  | "prep2"
-  | "prep3"
-  | "sec1"
-  | "sec2"
-  | "sec3";
+export type Grade = "prep1" | "prep2" | "prep3" | "sec1" | "sec2" | "sec3";
 
 export type Bilingual = { en: string; ar: string };
 
@@ -133,21 +127,8 @@ export const GRADE_LABEL: Record<Grade, Bilingual> = {
 };
 
 export const MODES: Mode[] = ["center", "home", "online", "manasa"];
-export const CURRICULA: Curriculum[] = [
-  "thanaweya",
-  "bakalorya",
-  "igcse",
-  "ib",
-  "american",
-];
-export const GRADES: Grade[] = [
-  "prep1",
-  "prep2",
-  "prep3",
-  "sec1",
-  "sec2",
-  "sec3",
-];
+export const CURRICULA: Curriculum[] = ["thanaweya", "bakalorya", "igcse", "ib", "american"];
+export const GRADES: Grade[] = ["prep1", "prep2", "prep3", "sec1", "sec2", "sec3"];
 
 export const subjectLabel = (id: string): Bilingual =>
   SUBJECTS.find((s) => s.id === id)?.label ?? { en: id, ar: id };

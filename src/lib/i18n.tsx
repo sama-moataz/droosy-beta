@@ -22,6 +22,7 @@ export const STRINGS: Dict = {
   nav_schedule: { en: "My Schedule", ar: "جدولي" },
   nav_packages: { en: "Packages", ar: "الباقات" },
   nav_teach: { en: "Teach on Droosy", ar: "سجّل كمدرس" },
+  nav_add_teacher: { en: "Add Teacher", ar: "إضافة مدرس" },
   nav_signin: { en: "Sign in", ar: "تسجيل الدخول" },
   nav_signout: { en: "Sign out", ar: "تسجيل الخروج" },
   search_placeholder: {
@@ -29,7 +30,10 @@ export const STRINGS: Dict = {
     ar: "ابحث عن مدرس أو مادة أو سنتر…",
   },
   hero_badge: { en: "Less stress, more studying", ar: "توتر أقل ومذاكرة أكثر" },
-  hero_title_1: { en: "Find all your teachers in one place and", ar: "لاقي كل مدرسينك في مكان واحد و" },
+  hero_title_1: {
+    en: "Find all your teachers in one place and",
+    ar: "لاقي كل مدرسينك في مكان واحد و",
+  },
   hero_title_2: { en: "save your time", ar: "وفّر وقتك" },
   hero_sub: {
     en: "Compare private teachers, centers and manasa platforms across Egypt by subject, governorate, curriculum and real student reviews — then book everything on one calendar.",
@@ -104,7 +108,10 @@ export const STRINGS: Dict = {
     en: "Application submitted — we'll review your documents shortly.",
     ar: "تم إرسال الطلب — سنراجع مستنداتك قريبًا.",
   },
-  sign_in_first: { en: "Sign in first to register as a teacher.", ar: "سجّل الدخول أولًا للتسجيل كمدرس." },
+  sign_in_first: {
+    en: "Sign in first to register as a teacher.",
+    ar: "سجّل الدخول أولًا للتسجيل كمدرس.",
+  },
   already_teacher_title: {
     en: "You're already a teacher on Droosy",
     ar: "أنت بالفعل مدرس على دروسي",
@@ -118,7 +125,10 @@ export const STRINGS: Dict = {
     en: "Your last application wasn't approved. Review your details below and submit again.",
     ar: "لم تتم الموافقة على طلبك السابق. راجع بياناتك بالأسفل وأرسل الطلب مرة أخرى.",
   },
-  required_fields: { en: "Please fill all required fields.", ar: "من فضلك أكمل جميع الحقول المطلوبة." },
+  required_fields: {
+    en: "Please fill all required fields.",
+    ar: "من فضلك أكمل جميع الحقول المطلوبة.",
+  },
   upload_both: { en: "Please upload both documents.", ar: "من فضلك ارفع المستندين." },
   theme_toggle: { en: "Toggle dark mode", ar: "تبديل الوضع الداكن" },
   lang_toggle: { en: "العربية", ar: "English" },
@@ -147,8 +157,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (storedLang === "ar" || storedLang === "en") setLangState(storedLang);
     const storedTheme = window.localStorage.getItem("droosy-theme") as Theme | null;
     if (storedTheme === "dark" || storedTheme === "light") setThemeState(storedTheme);
-    else if (window.matchMedia("(prefers-color-scheme: dark)").matches)
-      setThemeState("dark");
+    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setThemeState("dark");
   }, []);
 
   useEffect(() => {
@@ -172,10 +181,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [lang],
   );
 
-  const pick = useCallback(
-    (en: string, ar: string) => (lang === "ar" && ar ? ar : en),
-    [lang],
-  );
+  const pick = useCallback((en: string, ar: string) => (lang === "ar" && ar ? ar : en), [lang]);
 
   const value = useMemo<Ctx>(
     () => ({

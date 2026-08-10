@@ -16,9 +16,7 @@ export function Stars({
         const star = (
           <Star
             size={size}
-            className={
-              filled ? "fill-accent text-accent" : "text-muted-foreground/40"
-            }
+            className={filled ? "fill-accent text-accent" : "text-muted-foreground/40"}
           />
         );
         return onSelect ? (

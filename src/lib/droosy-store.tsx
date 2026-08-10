@@ -53,9 +53,7 @@ type Store = {
   removeBooking: (id: string) => Promise<void>;
 
   reviews: Review[];
-  addReview: (
-    r: Omit<Review, "id" | "date" | "verified">,
-  ) => Promise<ActionResult>;
+  addReview: (r: Omit<Review, "id" | "date" | "verified">) => Promise<ActionResult>;
 
   location: string;
   setLocation: (l: string) => void;
@@ -66,13 +64,7 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null);
 
-export function DroosyProvider({
-  catalog,
-  children,
-}: {
-  catalog: Catalog;
-  children: ReactNode;
-}) {
+export function DroosyProvider({ catalog, children }: { catalog: Catalog; children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -170,14 +162,17 @@ export function DroosyProvider({
         })
         .select("id, teacher_id, day, time, bundle_id")
         .single();
-      if (error || !data) return null;
+      if (error || !data) return { data: null, error };
       return {
-        id: data.id,
-        teacherId: data.teacher_id,
-        day: data.day,
-        time: data.time,
-        bundleId: data.bundle_id ?? undefined,
-      } satisfies Booking;
+        data: {
+          id: data.id,
+          teacherId: data.teacher_id,
+          day: data.day,
+          time: data.time,
+          bundleId: data.bundle_id ?? undefined,
+        } satisfies Booking,
+        error: null,
+      };
     };
 
     return {
@@ -202,21 +197,32 @@ export function DroosyProvider({
       bookings,
       addBooking: async (b) => {
         if (!user) return "auth";
-        if (bookings.some((x) => x.day === b.day && x.time === b.time))
+        if (
+          bookings.some(
+            (x) =>
+              x.day.slice(0, 3).toLowerCase() === b.day.slice(0, 3).toLowerCase() &&
+              x.time === b.time,
+          )
+        )
           return "conflict";
-        const created = await insertBooking(b);
-        if (!created) return "conflict";
+        const { data: created, error } = await insertBooking(b);
+        if (error) {
+          console.error("[droosy] insertBooking failed", error);
+          // Supabase unique violation code is usually '23505'
+          return error.code === "23505" ? "conflict" : "error";
+        }
+        if (!created) return "error";
         setBookings((prev) => [...prev, created]);
         return "ok";
       },
       addBookings: async (bs) => {
         if (!user) return "auth";
-        const taken = new Set(bookings.map((x) => `${x.day}|${x.time}`));
+        const taken = new Set(bookings.map((x) => `${x.day.slice(0, 3).toLowerCase()}|${x.time}`));
         const created: Booking[] = [];
         for (const b of bs) {
-          const key = `${b.day}|${b.time}`;
+          const key = `${b.day.slice(0, 3).toLowerCase()}|${b.time}`;
           if (taken.has(key)) continue;
-          const row = await insertBooking(b);
+          const { data: row } = await insertBooking(b);
           if (row) {
             taken.add(key);
             created.push(row);
@@ -254,9 +260,7 @@ export function DroosyProvider({
       setLocation,
       cart,
       toggleCart: (id) =>
-        setCart((prev) =>
-          prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
-        ),
+        setCart((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id])),
       clearCart: () => setCart([]),
     };
   }, [

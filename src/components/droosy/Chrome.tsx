@@ -48,8 +48,18 @@ function IconButton({
 }
 
 export function Header() {
-  const { location, setLocation, cart, bookings, user, profile, isAdmin, teacherId, authReady, signOut } =
-    useDroosy();
+  const {
+    location,
+    setLocation,
+    cart,
+    bookings,
+    user,
+    profile,
+    isAdmin,
+    teacherId,
+    authReady,
+    signOut,
+  } = useDroosy();
   const { t, lang, toggleLang, theme, toggleTheme } = useI18n();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -61,9 +71,7 @@ export function Header() {
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl gradient-brand text-on-brand">
             <BookOpen size={18} />
           </span>
-          <span className="truncate text-xl font-extrabold tracking-tight">
-            {t("brand")}
-          </span>
+          <span className="truncate text-xl font-extrabold tracking-tight">{t("brand")}</span>
         </Link>
 
         <div className="hidden items-center gap-2 lg:flex">
@@ -111,27 +119,16 @@ export function Header() {
           <IconButton onClick={toggleTheme} label={t("theme_toggle")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          {/* Teach on Droosy: only for logged-out visitors */}
-          {authReady && !user && (
+          {/* Teach on Droosy: only for logged-out visitors OR users with the 'teacher' role (but NOT admins) */}
+          {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
             <Link
-              to="/teach"
+              to={user && teacherId ? "/teacher/$teacherId" : "/teach"}
+              params={user && teacherId ? { teacherId } : undefined}
               className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
               activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
             >
               <GraduationCap size={16} />
               <span className="hidden lg:inline">{t("nav_teach")}</span>
-            </Link>
-          )}
-          {/* Existing teacher: link to their teacher profile */}
-          {authReady && user && teacherId && (
-            <Link
-              to="/teacher/$teacherId"
-              params={{ teacherId }}
-              className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
-              activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
-            >
-              <GraduationCap size={16} />
-              <span className="hidden lg:inline">{t("view_my_profile")}</span>
             </Link>
           )}
           <Link
@@ -160,7 +157,7 @@ export function Header() {
               </span>
             )}
           </Link>
-          {/* Admin link: only after auth is resolved and user is admin */}
+          {/* Admin link: Add Teacher */}
           {authReady && isAdmin && (
             <Link
               to="/admin"
@@ -168,12 +165,12 @@ export function Header() {
               activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
             >
               <ShieldCheck size={16} />
-              <span className="hidden sm:inline">Admin</span>
+              <span className="hidden sm:inline">{t("nav_add_teacher")}</span>
             </Link>
           )}
           {/* Auth actions: only render after authReady to prevent flicker */}
-          {authReady && (
-            user ? (
+          {authReady &&
+            (user ? (
               <div className="ms-1 flex items-center gap-1.5">
                 <span
                   title={profile?.fullName || user.email || ""}
@@ -199,8 +196,7 @@ export function Header() {
               >
                 {t("nav_signin")}
               </Link>
-            )
-          )}
+            ))}
         </nav>
       </div>
     </header>

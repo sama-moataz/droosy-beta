@@ -63,6 +63,9 @@ function Home() {
     getTeacher,
     user,
     authReady,
+    profile,
+    isAdmin,
+    teacherId,
   } = useDroosy();
   const { t, lang } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
@@ -79,13 +82,9 @@ function Home() {
       if (subject !== "all" && teacher.subject !== subject) return false;
       if (location !== "all" && teacher.region !== location) return false;
       if (mode !== "all" && !teacher.modes.includes(mode as Mode)) return false;
-      if (
-        curriculum !== "all" &&
-        !teacher.curricula.includes(curriculum as Curriculum)
-      )
+      if (curriculum !== "all" && !teacher.curricula.includes(curriculum as Curriculum))
         return false;
-      if (grade !== "all" && !teacher.grades.includes(grade as Grade))
-        return false;
+      if (grade !== "all" && !teacher.grades.includes(grade as Grade)) return false;
       if (
         needle &&
         !`${teacher.name} ${teacher.nameAr} ${teacher.subject} ${teacher.centerName} ${teacher.area} ${teacher.region}`
@@ -116,12 +115,9 @@ function Home() {
             <Sparkles size={13} /> {t("hero_badge")}
           </span>
           <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl">
-            {t("hero_title_1")}{" "}
-            <span className="text-gradient-brand">{t("hero_title_2")}</span>
+            {t("hero_title_1")} <span className="text-gradient-brand">{t("hero_title_2")}</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base text-muted-foreground">
-            {t("hero_sub")}
-          </p>
+          <p className="mt-4 max-w-xl text-base text-muted-foreground">{t("hero_sub")}</p>
 
           <div className="mt-8 flex max-w-2xl flex-col gap-2 rounded-2xl bg-card p-2 shadow-[var(--shadow-soft)] sm:flex-row">
             <div className="relative flex-1">
@@ -186,9 +182,7 @@ function Home() {
               <h2 className="text-2xl font-extrabold tracking-tight text-foreground">
                 {t("featured_packages")}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                {t("featured_packages_sub")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("featured_packages_sub")}</p>
             </div>
             <Link
               to="/packages"
@@ -283,10 +277,15 @@ function Home() {
                 <Button variant="outline" onClick={clearFilters}>
                   {t("clear_filters")}
                 </Button>
-                {/* Teach on Droosy CTA: only for logged-out visitors */}
-                {authReady && !user && (
+                {/* Teach on Droosy CTA */}
+                {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
                   <Button asChild>
-                    <Link to="/teach">{t("no_match_cta")}</Link>
+                    <Link
+                      to={user && teacherId ? "/teacher/$teacherId" : "/teach"}
+                      params={user && teacherId ? { teacherId } : undefined}
+                    >
+                      {t("no_match_cta")}
+                    </Link>
                   </Button>
                 )}
               </div>

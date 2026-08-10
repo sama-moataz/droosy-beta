@@ -12,7 +12,15 @@ import {
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { Stars } from "@/components/droosy/Stars";
-import { subjectLabel, governorateLabel, CURRICULUM_LABEL, GRADE_LABEL, MODE_LABEL, initials, type Teacher } from "@/lib/droosy-data";
+import {
+  subjectLabel,
+  governorateLabel,
+  CURRICULUM_LABEL,
+  GRADE_LABEL,
+  MODE_LABEL,
+  initials,
+  type Teacher,
+} from "@/lib/droosy-data";
 import { getCatalog } from "@/lib/droosy.functions";
 import { useDroosy } from "@/lib/droosy-store";
 import { useI18n } from "@/lib/i18n";
@@ -38,10 +46,7 @@ export const Route = createFileRoute("/teacher/$teacherId")({
   head: ({ loaderData }) => {
     if (!loaderData)
       return {
-        meta: [
-          { title: "Teacher not found — Droosy" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Teacher not found — Droosy" }, { name: "robots", content: "noindex" }],
       };
     const t = loaderData.teacher;
     const title = `${t.name} — ${t.subject} teacher in ${t.area} | Droosy`;
@@ -60,7 +65,8 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 
 function TeacherProfile() {
   const { teacher } = Route.useLoaderData() as { teacher: Teacher };
-  const { reviews, addReview, addBooking, cart, toggleCart } = useDroosy();
+  const { getTeacher, addBooking, reviews, addReview, user, bookings, cart, toggleCart } =
+    useDroosy();
   const { t, lang, pick } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
@@ -108,9 +114,7 @@ function TeacherProfile() {
                   <span className="flex items-center gap-2">
                     <Stars value={teacher.rating} />
                     <strong>{teacher.rating.toFixed(1)}</strong>
-                    <span className="text-muted-foreground">
-                      ({list.length} reviews)
-                    </span>
+                    <span className="text-muted-foreground">({list.length} reviews)</span>
                   </span>
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <Users size={15} /> {teacher.students.toLocaleString()} {t("students")}
@@ -208,9 +212,7 @@ function TeacherProfile() {
 
             <section className="surface-card p-6">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                <h2 className="min-w-0 text-lg font-extrabold">
-                  Student reviews
-                </h2>
+                <h2 className="min-w-0 text-lg font-extrabold">Student reviews</h2>
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline">
@@ -274,9 +276,7 @@ function TeacherProfile() {
 
               <ul className="mt-5 space-y-4">
                 {list.length === 0 && (
-                  <li className="text-sm text-muted-foreground">
-                    No reviews yet — be the first.
-                  </li>
+                  <li className="text-sm text-muted-foreground">No reviews yet — be the first.</li>
                 )}
                 {list.map((r) => (
                   <li key={r.id} className="rounded-2xl bg-muted/50 p-4">
@@ -289,9 +289,7 @@ function TeacherProfile() {
                           </span>
                         )}
                       </p>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {r.date}
-                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{r.date}</span>
                     </div>
                     <div className="mt-1">
                       <Stars value={r.rating} />
@@ -319,16 +317,39 @@ function TeacherProfile() {
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-2">
                       {d.times.map((time) => {
+                        const isBooked = bookings.some(
+                          (b) =>
+                            b.teacherId === teacher.id &&
+                            b.day.slice(0, 3).toLowerCase() === d.day.slice(0, 3).toLowerCase() &&
+                            b.time === time,
+                        );
+                        const isConflict =
+                          !isBooked &&
+                          bookings.some(
+                            (b) =>
+                              b.day.slice(0, 3).toLowerCase() === d.day.slice(0, 3).toLowerCase() &&
+                              b.time === time,
+                          );
                         const active = slot?.day === d.day && slot?.time === time;
                         return (
                           <button
                             key={time}
+                            disabled={isBooked || isConflict}
                             onClick={() => setSlot({ day: d.day, time })}
                             className={`rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors ${
-                              active
-                                ? "gradient-brand text-on-brand"
-                                : "bg-muted text-muted-foreground hover:text-foreground"
+                              isBooked || isConflict
+                                ? "bg-muted/50 text-muted-foreground/50 cursor-not-allowed opacity-60"
+                                : active
+                                  ? "gradient-brand text-on-brand"
+                                  : "bg-muted text-muted-foreground hover:text-foreground"
                             }`}
+                            title={
+                              isBooked
+                                ? "You already booked this slot"
+                                : isConflict
+                                  ? "You have another class at this time"
+                                  : undefined
+                            }
                           >
                             {time}
                           </button>
@@ -350,16 +371,10 @@ function TeacherProfile() {
                     day: slot.day,
                     time: slot.time,
                   }).then((res) => {
-                    if (res === "auth")
-                      toast.error("Sign in to book a session.");
+                    if (res === "auth") toast.error("Sign in to book a session.");
                     else if (res !== "ok")
-                      toast.error(
-                        `You already have a class on ${slot.day} at ${slot.time}.`,
-                      );
-                    else
-                      toast.success(
-                        `Booked ${slot.day} ${slot.time} with ${teacher.name}.`,
-                      );
+                      toast.error(`You already have a class on ${slot.day} at ${slot.time}.`);
+                    else toast.success(`Booked ${slot.day} ${slot.time} with ${teacher.name}.`);
                   });
                 }}
               >

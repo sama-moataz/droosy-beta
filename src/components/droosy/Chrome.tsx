@@ -48,7 +48,7 @@ function IconButton({
 }
 
 export function Header() {
-  const { location, setLocation, cart, bookings, user, profile, isAdmin, signOut } =
+  const { location, setLocation, cart, bookings, user, profile, isAdmin, teacherId, authReady, signOut } =
     useDroosy();
   const { t, lang, toggleLang, theme, toggleTheme } = useI18n();
   const navigate = useNavigate();
@@ -111,14 +111,29 @@ export function Header() {
           <IconButton onClick={toggleTheme} label={t("theme_toggle")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          <Link
-            to="/teach"
-            className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
-            activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
-          >
-            <GraduationCap size={16} />
-            <span className="hidden lg:inline">{t("nav_teach")}</span>
-          </Link>
+          {/* Teach on Droosy: only for logged-out visitors */}
+          {authReady && !user && (
+            <Link
+              to="/teach"
+              className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
+              activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
+            >
+              <GraduationCap size={16} />
+              <span className="hidden lg:inline">{t("nav_teach")}</span>
+            </Link>
+          )}
+          {/* Existing teacher: link to their teacher profile */}
+          {authReady && user && teacherId && (
+            <Link
+              to="/teacher/$teacherId"
+              params={{ teacherId }}
+              className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
+              activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
+            >
+              <GraduationCap size={16} />
+              <span className="hidden lg:inline">{t("view_my_profile")}</span>
+            </Link>
+          )}
           <Link
             to="/schedule"
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
@@ -145,7 +160,8 @@ export function Header() {
               </span>
             )}
           </Link>
-          {isAdmin && (
+          {/* Admin link: only after auth is resolved and user is admin */}
+          {authReady && isAdmin && (
             <Link
               to="/admin"
               className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
@@ -155,32 +171,35 @@ export function Header() {
               <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
-          {user ? (
-            <div className="ms-1 flex items-center gap-1.5">
-              <span
-                title={profile?.fullName || user.email || ""}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-on-brand"
+          {/* Auth actions: only render after authReady to prevent flicker */}
+          {authReady && (
+            user ? (
+              <div className="ms-1 flex items-center gap-1.5">
+                <span
+                  title={profile?.fullName || user.email || ""}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-on-brand"
+                >
+                  {profile?.fullName
+                    ? initials(profile.fullName)
+                    : (user.email ?? "?").slice(0, 1).toUpperCase()}
+                </span>
+                <IconButton
+                  onClick={() => {
+                    void signOut();
+                  }}
+                  label={t("nav_signout")}
+                >
+                  <LogOut size={16} />
+                </IconButton>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="ms-1 rounded-xl gradient-brand px-3.5 py-2 text-sm font-semibold text-on-brand"
               >
-                {profile?.fullName
-                  ? initials(profile.fullName)
-                  : (user.email ?? "?").slice(0, 1).toUpperCase()}
-              </span>
-              <IconButton
-                onClick={() => {
-                  void signOut();
-                }}
-                label={t("nav_signout")}
-              >
-                <LogOut size={16} />
-              </IconButton>
-            </div>
-          ) : (
-            <Link
-              to="/auth"
-              className="ms-1 rounded-xl gradient-brand px-3.5 py-2 text-sm font-semibold text-on-brand"
-            >
-              {t("nav_signin")}
-            </Link>
+                {t("nav_signin")}
+              </Link>
+            )
           )}
         </nav>
       </div>

@@ -61,6 +61,8 @@ function Home() {
     teachers: allTeachers,
     bundles: BUNDLES,
     getTeacher,
+    user,
+    authReady,
   } = useDroosy();
   const { t, lang } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
@@ -281,9 +283,12 @@ function Home() {
                 <Button variant="outline" onClick={clearFilters}>
                   {t("clear_filters")}
                 </Button>
-                <Button asChild>
-                  <Link to="/teach">{t("no_match_cta")}</Link>
-                </Button>
+                {/* Teach on Droosy CTA: only for logged-out visitors */}
+                {authReady && !user && (
+                  <Button asChild>
+                    <Link to="/teach">{t("no_match_cta")}</Link>
+                  </Button>
+                )}
               </div>
             </div>
           ) : (

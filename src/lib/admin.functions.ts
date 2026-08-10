@@ -117,13 +117,20 @@ export const reviewApplication = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (data.decision === "approved") {
+      const { data: existingTeachers } = await supabaseAdmin
+        .from("teachers")
+        .select("id")
+        .eq("owner_id", app.user_id)
+        .limit(1);
+
       const slug =
         app.full_name
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, "")
           .slice(0, 40) || "teacher";
-      const teacherId = `${slug}-${app.id.slice(0, 6)}`;
+      
+      const teacherId = existingTeachers?.[0]?.id || `${slug}-${app.id.slice(0, 6)}`;
 
       const { error: upErr } = await supabaseAdmin.from("teachers").upsert(
         {

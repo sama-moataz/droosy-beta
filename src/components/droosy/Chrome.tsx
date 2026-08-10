@@ -57,7 +57,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 lg:flex lg:gap-5">
         <Link to="/" className="flex min-w-0 items-center gap-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl gradient-brand text-primary-foreground">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl gradient-brand text-on-brand">
             <BookOpen size={18} />
           </span>
           <span className="truncate text-xl font-extrabold tracking-tight">
@@ -148,7 +148,7 @@ export function Header() {
             <div className="ms-1 flex items-center gap-1.5">
               <span
                 title={profile?.fullName || user.email || ""}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-primary-foreground"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-on-brand"
               >
                 {profile?.fullName
                   ? initials(profile.fullName)
@@ -166,7 +166,7 @@ export function Header() {
           ) : (
             <Link
               to="/auth"
-              className="ms-1 rounded-xl gradient-brand px-3.5 py-2 text-sm font-semibold text-primary-foreground"
+              className="ms-1 rounded-xl gradient-brand px-3.5 py-2 text-sm font-semibold text-on-brand"
             >
               {t("nav_signin")}
             </Link>

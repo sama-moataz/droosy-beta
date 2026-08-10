@@ -98,7 +98,7 @@ function AuthPage() {
     <div className="grid min-h-screen place-items-center gradient-soft px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="grid h-10 w-10 place-items-center rounded-xl gradient-brand text-primary-foreground">
+          <span className="grid h-10 w-10 place-items-center rounded-xl gradient-brand text-on-brand">
             <BookOpen size={20} />
           </span>
           <span className="text-2xl font-extrabold tracking-tight">Droosy</span>
@@ -158,7 +158,7 @@ function AuthPage() {
                             onClick={() => setRole(r)}
                             className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-colors ${
                               role === r
-                                ? "gradient-brand text-primary-foreground"
+                                ? "gradient-brand text-on-brand"
                                 : "bg-muted text-muted-foreground hover:text-foreground"
                             }`}
                           >

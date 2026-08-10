@@ -88,7 +88,7 @@ function Chips<T extends string>({
             onClick={() => onToggle(v)}
             className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
               active
-                ? "border-transparent gradient-brand text-primary-foreground"
+                ? "border-transparent gradient-brand text-on-brand"
                 : "border-border bg-card text-muted-foreground hover:text-foreground"
             }`}
           >

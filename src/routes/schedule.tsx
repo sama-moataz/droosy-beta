@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Clock, MapPin, Trash2 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
-import { initials } from "@/lib/droosy-data";
+import { initials, subjectLabel } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n, dayLabel } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 const DAYS = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -28,28 +29,31 @@ export const Route = createFileRoute("/schedule")({
 
 function Schedule() {
   const { bookings, removeBooking, getTeacher } = useDroosy();
+  const { t, lang, pick } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight">
-          <CalendarDays size={26} className="text-primary" /> My Schedule
+          <CalendarDays size={26} className="text-primary" /> {t("sch_title")}
         </h1>
         <p className="mt-2 text-muted-foreground">
           {bookings.length === 0
-            ? "No sessions booked yet."
-            : `${bookings.length} upcoming session${bookings.length === 1 ? "" : "s"} this week.`}
+            ? t("sch_empty_sub")
+            : t("sch_count_sub", {
+                n: bookings.length,
+                plural: bookings.length === 1 ? "" : "s",
+              })}
         </p>
 
         {bookings.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-dashed border-border p-14 text-center">
-            <p className="font-semibold">Your week is completely free.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Book a teacher or a full package to fill your timetable.
-            </p>
+            <p className="font-semibold">{t("sch_empty_free")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("sch_empty_hint")}</p>
             <Button asChild className="mt-5">
-              <Link to="/">Browse teachers</Link>
+              <Link to="/">{t("sch_browse_btn")}</Link>
             </Button>
           </div>
         ) : (
@@ -58,8 +62,8 @@ function Schedule() {
               const items = bookings
                 .filter((b) => b.day.slice(0, 3).toLowerCase() === day.slice(0, 3).toLowerCase())
                 .sort((a, b) => {
-                  const parseTime = (t: string) => {
-                    const parts = t.split(" ");
+                  const parseTime = (tStr: string) => {
+                    const parts = tStr.split(" ");
                     const timeStr = parts[0];
                     const modifier = parts[1];
                     const timeParts = timeStr?.split(":") ?? [];
@@ -75,15 +79,15 @@ function Schedule() {
               return (
                 <section key={day} className="rounded-3xl bg-muted/50 p-4">
                   <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
-                    {day}
+                    {dayLabel(day, lang)}
                   </h2>
                   <div className="mt-3 space-y-3">
                     {items.length === 0 && (
-                      <p className="text-xs text-muted-foreground/70">Free day</p>
+                      <p className="text-xs text-muted-foreground/70">{t("sch_free_day")}</p>
                     )}
                     {items.map((b) => {
-                      const t = getTeacher(b.teacherId);
-                      if (!t) return null;
+                      const teacher = getTeacher(b.teacherId);
+                      if (!teacher) return null;
                       return (
                         <article
                           key={b.id}
@@ -91,13 +95,17 @@ function Schedule() {
                         >
                           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                             <span
-                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br text-[11px] font-bold text-on-brand ${t.accent}`}
+                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br text-[11px] font-bold text-on-brand ${teacher.accent}`}
                             >
-                              {initials(t.name)}
+                              {initials(teacher.name)}
                             </span>
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-bold">{t.subject}</p>
-                              <p className="truncate text-xs text-muted-foreground">{t.name}</p>
+                              <p className="truncate text-sm font-bold">
+                                {L(subjectLabel(teacher.subject))}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {pick(teacher.name, teacher.nameAr)}
+                              </p>
                             </div>
                           </div>
                           <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-primary">
@@ -105,18 +113,18 @@ function Schedule() {
                           </p>
                           <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                             <MapPin size={12} />
-                            <span className="truncate">{t.centerName}</span>
+                            <span className="truncate">{teacher.centerName}</span>
                           </p>
                           <div className="mt-3 flex items-center justify-between">
                             <Link
                               to="/teacher/$teacherId"
-                              params={{ teacherId: t.id }}
+                              params={{ teacherId: teacher.id }}
                               className="text-xs font-semibold text-primary"
                             >
-                              View profile
+                              {t("sch_view_profile")}
                             </Link>
                             <button
-                              aria-label="Cancel session"
+                              aria-label={t("sch_cancel_aria")}
                               onClick={() => void removeBooking(b.id)}
                               className="text-muted-foreground hover:text-destructive"
                             >

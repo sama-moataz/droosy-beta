@@ -5,6 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,11 +40,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const emailSchema = z.string().trim().email("Enter a valid email").max(255);
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
-const nameSchema = z.string().trim().min(2, "Enter your name").max(80);
-
 function AuthPage() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [accountType, setAccountType] = useState<"student" | "teacher">("student");
   const [email, setEmail] = useState("");
@@ -56,6 +54,10 @@ function AuthPage() {
   const destination = redirect ?? "/";
   const navigate = useNavigate();
   const router = useRouter();
+
+  const emailSchema = z.string().trim().email(t("auth_val_email")).max(255);
+  const passwordSchema = z.string().min(6, t("auth_val_password")).max(72);
+  const nameSchema = z.string().trim().min(2, t("auth_val_name")).max(80);
 
   useEffect(() => {
     if (authReady && user) void navigate({ to: destination, replace: true });
@@ -87,7 +89,6 @@ function AuthPage() {
           password: pass.data,
           options: {
             emailRedirectTo: window.location.origin,
-            // Note: the backend trigger may use this 'role' metadata to populate the profiles table.
             data: { full_name: name.data, role: accountType },
           },
         });
@@ -95,7 +96,6 @@ function AuthPage() {
           toast.error(error.message);
           return;
         }
-        // Attempt to eagerly update the profile if a session was returned and RLS permits it.
         if (data.session && data.user) {
           await supabase.from("profiles").update({ role: accountType }).eq("id", data.user.id);
         }
@@ -103,7 +103,7 @@ function AuthPage() {
           setSent(true);
           return;
         }
-        toast.success("Welcome to Droosy!");
+        toast.success(t("auth_toast_welcome"));
         router.invalidate();
         void navigate({ to: destination, replace: true });
       } else {
@@ -115,7 +115,7 @@ function AuthPage() {
           toast.error(error.message);
           return;
         }
-        toast.success("Signed in.");
+        toast.success(t("auth_toast_signed_in"));
         router.invalidate();
         void navigate({ to: destination, replace: true });
       }
@@ -131,17 +131,14 @@ function AuthPage() {
           <span className="grid h-10 w-10 place-items-center rounded-xl gradient-brand text-on-brand">
             <BookOpen size={20} />
           </span>
-          <span className="text-2xl font-extrabold tracking-tight">Droosy</span>
+          <span className="text-2xl font-extrabold tracking-tight">{t("brand")}</span>
         </Link>
 
         <div className="surface-card p-7">
           {sent ? (
             <div className="text-center">
-              <h1 className="text-xl font-extrabold">Check your inbox</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                We sent a confirmation link to <strong>{email}</strong>. Open it to activate your
-                account, then come back and sign in.
-              </p>
+              <h1 className="text-xl font-extrabold">{t("auth_sent_title")}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{t("auth_sent_body", { email })}</p>
               <Button
                 variant="outline"
                 className="mt-5 w-full"
@@ -150,25 +147,23 @@ function AuthPage() {
                   setMode("signin");
                 }}
               >
-                Back to sign in
+                {t("auth_sent_back")}
               </Button>
             </div>
           ) : (
             <>
               <h1 className="text-2xl font-extrabold tracking-tight">
-                {mode === "signin" ? "Welcome back" : "Create your account"}
+                {mode === "signin" ? t("auth_title_signin") : t("auth_title_signup")}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {mode === "signin"
-                  ? "Sign in to see your schedule and bookings."
-                  : "Save your bookings, reviews and packages in one place."}
+                {mode === "signin" ? t("auth_sub_signin") : t("auth_sub_signup")}
               </p>
 
               <form className="mt-6 space-y-4" onSubmit={submit}>
                 {mode === "signup" && (
                   <>
                     <div className="space-y-3">
-                      <Label>I want to use Droosy as a</Label>
+                      <Label>{t("auth_role_label")}</Label>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
@@ -179,7 +174,7 @@ function AuthPage() {
                               : "border-border bg-card text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          Student
+                          {t("auth_role_student")}
                         </button>
                         <button
                           type="button"
@@ -190,13 +185,13 @@ function AuthPage() {
                               : "border-border bg-card text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          Teacher
+                          {t("auth_role_teacher")}
                         </button>
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="fullName">Full name</Label>
+                      <Label htmlFor="fullName">{t("auth_label_name")}</Label>
                       <Input
                         id="fullName"
                         value={fullName}
@@ -210,7 +205,7 @@ function AuthPage() {
                 )}
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("auth_label_email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -223,40 +218,38 @@ function AuthPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t("auth_label_password")}</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={t("auth_placeholder_password")}
                     autoComplete={mode === "signin" ? "current-password" : "new-password"}
                   />
                 </div>
 
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 size={16} className="animate-spin" />}
-                  {mode === "signin" ? "Sign in" : "Create account"}
+                  {mode === "signin" ? t("auth_btn_signin") : t("auth_btn_signup")}
                 </Button>
               </form>
 
               <p className="mt-5 text-center text-sm text-muted-foreground">
-                {mode === "signin" ? "New to Droosy?" : "Already have an account?"}{" "}
+                {mode === "signin" ? t("auth_prompt_new") : t("auth_prompt_existing")}{" "}
                 <button
                   type="button"
-                  className="font-semibold text-primary"
+                  className="font-semibold text-primary ms-1"
                   onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
                 >
-                  {mode === "signin" ? "Create an account" : "Sign in"}
+                  {mode === "signin" ? t("auth_switch_signup") : t("auth_switch_signin")}
                 </button>
               </p>
             </>
           )}
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Idea by Rokaya, Sama, Haneen, and Sajda.
-        </p>
+        <p className="mt-6 text-center text-xs text-muted-foreground">{t("footer_credits")}</p>
       </div>
     </div>
   );

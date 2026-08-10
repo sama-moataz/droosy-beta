@@ -145,18 +145,18 @@ export const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export function relativeDate(iso: string): string {
+export function relativeDate(iso: string, lang: "en" | "ar" = "en"): string {
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / 86_400_000);
-  if (days < 1) return "Just now";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${days} days ago`;
+  if (days < 1) return lang === "ar" ? "الآن" : "Just now";
+  if (days === 1) return lang === "ar" ? "أمس" : "Yesterday";
+  if (days < 7) return lang === "ar" ? `منذ ${days} أيام` : `${days} days ago`;
   if (days < 30) {
     const w = Math.floor(days / 7);
-    return `${w} week${w === 1 ? "" : "s"} ago`;
+    return lang === "ar" ? `منذ ${w} أسابيع` : `${w} week${w === 1 ? "" : "s"} ago`;
   }
   const m = Math.floor(days / 30);
-  return `${m} month${m === 1 ? "" : "s"} ago`;
+  return lang === "ar" ? `منذ ${m} أشهر` : `${m} month${m === 1 ? "" : "s"} ago`;
 }
 
 /* ---------- row mappers (database -> app types) ---------- */

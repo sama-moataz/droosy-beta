@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 import { Check, Layers, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Header, Footer } from "@/components/droosy/Chrome";
-import { initials } from "@/lib/droosy-data";
+import { initials, subjectLabel } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/packages")({
@@ -37,56 +38,62 @@ function Packages() {
     bundles: BUNDLES,
     getTeacher,
   } = useDroosy();
+  const { t, lang, pick } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
+
   const [openBundle, setOpenBundle] = useState<string | null>(null);
 
   const picked = useMemo(
     () => cart.map((id) => getTeacher(id)).filter(Boolean),
     [cart, getTeacher],
   );
-  const subtotal = picked.reduce((s, t) => s + (t?.pricePerSession ?? 0), 0);
+  const subtotal = picked.reduce((s, tItem) => s + (tItem?.pricePerSession ?? 0), 0);
   const discount = picked.length >= 3 ? 0.2 : picked.length === 2 ? 0.1 : 0;
   const total = Math.round(subtotal * (1 - discount) * 100) / 100;
 
   const bookAll = async (ids: string[], bundleId?: string) => {
     const wanted = ids
       .map((id) => getTeacher(id))
-      .filter((t): t is NonNullable<typeof t> => Boolean(t))
-      .map((t) => {
-        const day = t.slots[0]!;
-        return { teacherId: t.id, day: day.day, time: day.times[0]!, bundleId };
+      .filter((tItem): tItem is NonNullable<typeof tItem> => Boolean(tItem))
+      .map((tItem) => {
+        const day = tItem.slots[0]!;
+        return { teacherId: tItem.id, day: day.day, time: day.times[0]!, bundleId };
       });
     const added = await addBookings(wanted);
     if (added === "auth") {
-      toast.error("Sign in to book a package.");
+      toast.error(t("pkg_toast_auth"));
       return;
     }
-    if (added === 0) toast.error("All those slots clash with classes you already booked.");
-    else toast.success(`${added} session${added === 1 ? "" : "s"} added to your schedule.`);
+    if (added === 0) toast.error(t("pkg_toast_clash"));
+    else
+      toast.success(
+        t("pkg_toast_added", {
+          n: added,
+          plural: added === 1 ? "" : "s",
+        }),
+      );
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-10">
-        <h1 className="text-3xl font-extrabold tracking-tight">All-in-One Packages</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Choose a ready bundle, or build your own mix of teachers across subjects. Two subjects
-          save 10%, three or more save 20%.
-        </p>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t("pkg_title")}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{t("pkg_sub")}</p>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-3">
           {BUNDLES.map((b) => {
             const teachers = b.teacherIds
               .map((id) => getTeacher(id))
-              .filter((t): t is NonNullable<typeof t> => Boolean(t));
-            const raw = teachers.reduce((s, t) => s + t.pricePerSession, 0);
+              .filter((tItem): tItem is NonNullable<typeof tItem> => Boolean(tItem));
+            const raw = teachers.reduce((s, tItem) => s + tItem.pricePerSession, 0);
             const price = Math.round(raw * (1 - b.discount) * 100) / 100;
             const open = openBundle === b.id;
             return (
               <article key={b.id} className="surface-card overflow-hidden">
                 <div className={`bg-gradient-to-br p-6 text-on-brand ${b.accent}`}>
                   <span className="rounded-full bg-on-brand/20 px-2.5 py-1 text-xs font-bold">
-                    Save {Math.round(b.discount * 100)}%
+                    {t("save")} {Math.round(b.discount * 100)}%
                   </span>
                   <h2 className="mt-3 text-xl font-extrabold">{b.title}</h2>
                   <p className="mt-1 text-sm opacity-90">{b.tagline}</p>
@@ -96,26 +103,28 @@ function Packages() {
                     onClick={() => setOpenBundle(open ? null : b.id)}
                     className="text-sm font-semibold text-primary"
                   >
-                    {open ? "Hide teachers" : `Show ${teachers.length} teachers`}
+                    {open ? t("pkg_hide_teachers") : t("pkg_show_teachers", { n: teachers.length })}
                   </button>
                   {open && (
                     <ul className="mt-3 space-y-2">
-                      {teachers.map((t) => (
-                        <li key={t.id}>
+                      {teachers.map((tItem) => (
+                        <li key={tItem.id}>
                           <Link
                             to="/teacher/$teacherId"
-                            params={{ teacherId: t.id }}
+                            params={{ teacherId: tItem.id }}
                             className="flex items-center gap-3 rounded-2xl bg-muted/60 p-2.5 transition-colors hover:bg-muted"
                           >
                             <span
-                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${t.accent}`}
+                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${tItem.accent}`}
                             >
-                              {initials(t.name)}
+                              {initials(tItem.name)}
                             </span>
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold">{t.name}</span>
+                              <span className="block truncate text-sm font-semibold">
+                                {pick(tItem.name, tItem.nameAr)}
+                              </span>
                               <span className="block text-xs text-muted-foreground">
-                                {t.subject} · {t.area}
+                                {L(subjectLabel(tItem.subject))} · {tItem.area}
                               </span>
                             </span>
                           </Link>
@@ -124,13 +133,15 @@ function Packages() {
                     </ul>
                   )}
                   <div className="mt-5 flex items-end gap-2">
-                    <span className="text-2xl font-extrabold">{price} EGP</span>
+                    <span className="text-2xl font-extrabold">
+                      {price} {t("egp")}
+                    </span>
                     <span className="pb-1 text-sm text-muted-foreground line-through">
-                      {raw} EGP
+                      {raw} {t("egp")}
                     </span>
                   </div>
                   <Button className="mt-4 w-full" onClick={() => void bookAll(b.teacherIds, b.id)}>
-                    <Sparkles size={15} /> Book the whole bundle
+                    <Sparkles size={15} /> {t("pkg_book_bundle")}
                   </Button>
                 </div>
               </article>
@@ -141,33 +152,33 @@ function Packages() {
         <section className="mt-14 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div>
             <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-              <Layers size={20} className="text-primary" /> Build your own package
+              <Layers size={20} className="text-primary" /> {t("pkg_build_title")}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Tap teachers to add or remove them from your bundle.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("pkg_build_sub")}</p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {TEACHERS.map((t) => {
-                const active = cart.includes(t.id);
+              {TEACHERS.map((tItem) => {
+                const active = cart.includes(tItem.id);
                 return (
                   <button
-                    key={t.id}
-                    onClick={() => toggleCart(t.id)}
-                    className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 text-left transition-colors ${
+                    key={tItem.id}
+                    onClick={() => toggleCart(tItem.id)}
+                    className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 text-left transition-colors rtl:text-right ${
                       active
                         ? "border-primary bg-brand-soft"
                         : "border-border bg-card hover:bg-muted/60"
                     }`}
                   >
                     <span
-                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${t.accent}`}
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${tItem.accent}`}
                     >
-                      {initials(t.name)}
+                      {initials(tItem.name)}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold">{t.name}</span>
+                      <span className="block truncate text-sm font-bold">
+                        {pick(tItem.name, tItem.nameAr)}
+                      </span>
                       <span className="block text-xs text-muted-foreground">
-                        {t.subject} · {t.pricePerSession} EGP
+                        {L(subjectLabel(tItem.subject))} · {tItem.pricePerSession} {t("egp")}
                       </span>
                     </span>
                     {active && <Check size={16} className="text-primary" />}
@@ -179,25 +190,25 @@ function Packages() {
 
           <aside className="lg:sticky lg:top-24 lg:h-fit">
             <div className="surface-card p-6">
-              <h3 className="text-lg font-extrabold">Your package</h3>
+              <h3 className="text-lg font-extrabold">{t("pkg_your_package")}</h3>
               {picked.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Nothing added yet. Pick at least two subjects to unlock a discount.
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{t("pkg_empty_cart")}</p>
               ) : (
                 <ul className="mt-4 space-y-2">
-                  {picked.map((t) => (
+                  {picked.map((tItem) => (
                     <li
-                      key={t!.id}
+                      key={tItem!.id}
                       className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 text-sm"
                     >
                       <span className="min-w-0 truncate font-medium">
-                        {t!.subject} — {t!.name}
+                        {L(subjectLabel(tItem!.subject))} — {pick(tItem!.name, tItem!.nameAr)}
                       </span>
-                      <span className="text-muted-foreground">{t!.pricePerSession} EGP</span>
+                      <span className="text-muted-foreground">
+                        {tItem!.pricePerSession} {t("egp")}
+                      </span>
                       <button
-                        aria-label="Remove"
-                        onClick={() => toggleCart(t!.id)}
+                        aria-label={t("remove")}
+                        onClick={() => toggleCart(tItem!.id)}
                         className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 size={14} />
@@ -209,16 +220,20 @@ function Packages() {
 
               <div className="mt-5 space-y-1 border-t border-border pt-4 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>{subtotal} EGP</span>
+                  <span>{t("pkg_subtotal")}</span>
+                  <span>
+                    {subtotal} {t("egp")}
+                  </span>
                 </div>
                 <div className="flex justify-between text-primary">
-                  <span>Bundle discount</span>
+                  <span>{t("pkg_discount")}</span>
                   <span>-{Math.round(discount * 100)}%</span>
                 </div>
                 <div className="flex justify-between text-base font-extrabold">
-                  <span>Total per week</span>
-                  <span>{total} EGP</span>
+                  <span>{t("pkg_total_per_week")}</span>
+                  <span>
+                    {total} {t("egp")}
+                  </span>
                 </div>
               </div>
 
@@ -230,7 +245,7 @@ function Packages() {
                   clearCart();
                 }}
               >
-                Book all in one click
+                {t("pkg_book_all")}
               </Button>
             </div>
           </aside>

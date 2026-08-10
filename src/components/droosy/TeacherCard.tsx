@@ -97,7 +97,7 @@ export function TeacherCard({ teacher }: { teacher: Teacher }) {
           <Button
             variant={inCart ? "secondary" : "outline"}
             size="icon"
-            aria-label="Add to package"
+            aria-label={inCart ? t("remove_from_package") : t("add_to_package")}
             onClick={() => toggleCart(teacher.id)}
           >
             {inCart ? <Check size={16} /> : <Plus size={16} />}

@@ -280,11 +280,8 @@ function Home() {
                 {/* Teach on Droosy CTA */}
                 {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
                   <Button asChild>
-                    <Link
-                      to={user && teacherId ? "/teacher/$teacherId" : "/teach"}
-                      params={user && teacherId ? { teacherId } : undefined}
-                    >
-                      {t("no_match_cta")}
+                    <Link to={user && teacherId ? "/teacher/dashboard" : "/teach"}>
+                      {user && teacherId ? t("nav_teacher_dashboard") : t("no_match_cta")}
                     </Link>
                   </Button>
                 )}

@@ -212,7 +212,7 @@ export function Footer() {
           <p className="text-base font-extrabold text-foreground">{t("brand")}</p>
           <p>{t("tagline")}</p>
         </div>
-        <p className="text-xs">Idea by Rokaya, Sama, Haneen, and Sajda.</p>
+        <p className="text-xs">{t("footer_credits")}</p>
       </div>
     </footer>
   );

@@ -461,7 +461,7 @@ function TeachPage() {
 
             <Button type="submit" size="lg" disabled={busy} className="w-full">
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              {t("submit_application")}
+              {status === "rejected" ? t("resubmit_application") : t("submit_application")}
             </Button>
           </form>
         )}

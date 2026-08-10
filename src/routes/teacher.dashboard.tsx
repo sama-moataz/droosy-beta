@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n, dayLabel } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,7 +93,10 @@ function Chips<T extends string>({
 
 function TeacherDashboard() {
   const { teacherId: searchTeacherId } = Route.useSearch();
-  const { user, authReady, profile, isAdmin, teacherId } = useDroosy();
+  const { user, authReady, profile, isAdmin } = useDroosy();
+  const { t, lang } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
+
   const getProfile = useServerFn(getMyTeacherProfile);
   const updateProfile = useServerFn(updateTeacherProfile);
   const updateSlots = useServerFn(updateTeacherSlots);
@@ -159,11 +163,11 @@ function TeacherDashboard() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Could not load your teacher profile");
+      toast.error(t("td_toast_load_err"));
     } finally {
       setLoading(false);
     }
-  }, [getProfile, searchTeacherId]);
+  }, [getProfile, searchTeacherId, t]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -193,7 +197,7 @@ function TeacherDashboard() {
       curricula.length === 0 ||
       grades.length === 0
     ) {
-      toast.error("Please fill all required fields.");
+      toast.error(t("required_fields"));
       return;
     }
 
@@ -217,7 +221,7 @@ function TeacherDashboard() {
           grades,
         },
       });
-      toast.success("Profile updated successfully");
+      toast.success(t("td_toast_profile_updated"));
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -234,7 +238,7 @@ function TeacherDashboard() {
           slots: slots.filter((s) => s.times.length > 0),
         },
       });
-      toast.success("Availability updated successfully");
+      toast.success(t("td_toast_avail_updated"));
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -243,7 +247,7 @@ function TeacherDashboard() {
   };
 
   const addTime = (dayIdx: number) => {
-    const time = window.prompt("Enter time (e.g., '14:00' or '2:00 PM')");
+    const time = window.prompt(t("td_prompt_time"));
     if (!time || !time.trim()) return;
     setSlots((prev) => {
       const next = [...prev];
@@ -282,12 +286,10 @@ function TeacherDashboard() {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="mx-auto max-w-5xl px-4 py-12">
-          <h1 className="text-3xl font-extrabold text-foreground">Teacher Dashboard</h1>
-          <p className="mt-4 text-muted-foreground">
-            You do not have a verified teacher profile yet.
-          </p>
+          <h1 className="text-3xl font-extrabold text-foreground">{t("td_dashboard_title")}</h1>
+          <p className="mt-4 text-muted-foreground">{t("td_no_profile_title")}</p>
           <Button asChild className="mt-6">
-            <Link to="/teach">Apply to teach</Link>
+            <Link to="/teach">{t("td_apply_btn")}</Link>
           </Button>
         </main>
       </div>
@@ -301,18 +303,16 @@ function TeacherDashboard() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-secondary-foreground">
-              <GraduationCap size={14} /> Teacher Dashboard
+              <GraduationCap size={14} /> {t("td_dashboard_title")}
             </span>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-foreground">
-              Manage your profile
+              {t("td_manage_profile")}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Keep your details and availability up to date so students can book you.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("td_manage_sub")}</p>
           </div>
           <Button asChild variant="outline">
             <Link to="/teacher/$teacherId" params={{ teacherId: id }}>
-              View public profile <ExternalLink size={16} className="ml-2" />
+              {t("td_view_public")} <ExternalLink size={16} className="ms-2 rtl-flip" />
             </Link>
           </Button>
         </div>
@@ -327,7 +327,7 @@ function TeacherDashboard() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <User size={16} /> Profile Details
+            <User size={16} /> {t("td_tab_profile")}
           </button>
           <button
             type="button"
@@ -338,7 +338,7 @@ function TeacherDashboard() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <CalendarDays size={16} /> Availability
+            <CalendarDays size={16} /> {t("td_tab_availability")}
           </button>
         </div>
 
@@ -346,11 +346,11 @@ function TeacherDashboard() {
           <form onSubmit={saveProfile} className="mt-8 space-y-6 max-w-3xl">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="td-fn">Full name (English) *</Label>
+                <Label htmlFor="td-fn">{t("full_name")} *</Label>
                 <Input id="td-fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="td-fnar">Full name (Arabic)</Label>
+                <Label htmlFor="td-fnar">{t("full_name_ar")}</Label>
                 <Input
                   id="td-fnar"
                   value={fullNameAr}
@@ -361,44 +361,44 @@ function TeacherDashboard() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <Label>Subject *</Label>
+                <Label>{t("subject")} *</Label>
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder={t("select_subject")} />
                   </SelectTrigger>
                   <SelectContent>
                     {SUBJECTS.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.label.en}
+                        {L(s.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Governorate *</Label>
+                <Label>{t("governorate")} *</Label>
                 <Select value={governorate} onValueChange={setGovernorate}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select governorate" />
+                    <SelectValue placeholder={t("select_governorate")} />
                   </SelectTrigger>
                   <SelectContent>
                     {GOVERNORATES.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        {g.label.en}
+                        {L(g.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="td-area">Area / district *</Label>
+                <Label htmlFor="td-area">{t("area")} *</Label>
                 <Input id="td-area" value={area} onChange={(e) => setArea(e.target.value)} />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="td-cn">Center name</Label>
+                <Label htmlFor="td-cn">{t("center_name")}</Label>
                 <Input
                   id="td-cn"
                   value={centerName}
@@ -406,7 +406,7 @@ function TeacherDashboard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="td-ca">Center address</Label>
+                <Label htmlFor="td-ca">{t("center_address")}</Label>
                 <Input
                   id="td-ca"
                   value={centerAddress}
@@ -417,7 +417,7 @@ function TeacherDashboard() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="td-price">Price per session (EGP) *</Label>
+                <Label htmlFor="td-price">{t("price")} *</Label>
                 <Input
                   id="td-price"
                   type="number"
@@ -427,7 +427,7 @@ function TeacherDashboard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="td-platform">Platform URL</Label>
+                <Label htmlFor="td-platform">{t("platform_url")}</Label>
                 <Input
                   id="td-platform"
                   value={platformUrl}
@@ -437,37 +437,37 @@ function TeacherDashboard() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Lesson types *</Label>
+              <Label>{t("lesson_types")} *</Label>
               <Chips
                 items={MODES}
-                label={(v) => MODE_LABEL[v].en}
+                label={(v) => L(MODE_LABEL[v])}
                 selected={modes}
                 onToggle={(v) => toggle(v, modes, setModes)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Curricula *</Label>
+              <Label>{t("curricula")} *</Label>
               <Chips
                 items={CURRICULA}
-                label={(v) => CURRICULUM_LABEL[v].en}
+                label={(v) => L(CURRICULUM_LABEL[v])}
                 selected={curricula}
                 onToggle={(v) => toggle(v, curricula, setCurricula)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Grade levels *</Label>
+              <Label>{t("grades")} *</Label>
               <Chips
                 items={GRADES}
-                label={(v) => GRADE_LABEL[v].en}
+                label={(v) => L(GRADE_LABEL[v])}
                 selected={grades}
                 onToggle={(v) => toggle(v, grades, setGrades)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="td-bio">Bio / about</Label>
+              <Label htmlFor="td-bio">{t("bio")}</Label>
               <Textarea
                 id="td-bio"
                 value={bio}
@@ -479,49 +479,48 @@ function TeacherDashboard() {
 
             <Button type="submit" disabled={saving}>
               {saving ? (
-                <Loader2 size={16} className="animate-spin mr-2" />
+                <Loader2 size={16} className="animate-spin me-2" />
               ) : (
-                <Save size={16} className="mr-2" />
+                <Save size={16} className="me-2" />
               )}
-              Save Profile
+              {t("td_save_profile")}
             </Button>
           </form>
         )}
 
         {tab === "availability" && (
           <div className="mt-8 max-w-3xl">
-            <p className="text-sm text-muted-foreground mb-6">
-              Add the times you are available to teach. Students can select these times when booking
-              you. Make sure to format times clearly (e.g. "4:00 PM" or "16:00").
-            </p>
+            <p className="text-sm text-muted-foreground mb-6">{t("td_avail_sub")}</p>
 
             <div className="space-y-6">
               {slots.map((dayObj, dayIdx) => (
                 <div key={dayObj.day} className="rounded-2xl border border-border bg-card p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-foreground">{dayObj.day}</h3>
+                    <h3 className="text-lg font-bold text-foreground">
+                      {dayLabel(dayObj.day, lang)}
+                    </h3>
                     <Button variant="outline" size="sm" onClick={() => addTime(dayIdx)}>
-                      <Plus size={16} className="mr-2" /> Add Time
+                      <Plus size={16} className="me-2" /> {t("td_add_time")}
                     </Button>
                   </div>
 
                   {dayObj.times.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">
-                      No times set for {dayObj.day}.
+                      {t("td_no_times_set", { day: dayLabel(dayObj.day, lang) })}
                     </p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {dayObj.times.map((time) => (
                         <div
                           key={time}
-                          className="flex items-center gap-2 rounded-xl bg-muted pl-3 pr-2 py-1.5 text-sm font-semibold text-foreground"
+                          className="flex items-center gap-2 rounded-xl bg-muted pl-3 pr-2 py-1.5 text-sm font-semibold text-foreground rtl:pl-2 rtl:pr-3"
                         >
                           {time}
                           <button
                             type="button"
                             onClick={() => removeTime(dayIdx, time)}
                             className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                            title="Remove time"
+                            title={t("td_remove_time")}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -536,11 +535,11 @@ function TeacherDashboard() {
             <div className="mt-8">
               <Button onClick={saveSlots} disabled={saving}>
                 {saving ? (
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2 size={16} className="animate-spin me-2" />
                 ) : (
-                  <Save size={16} className="mr-2" />
+                  <Save size={16} className="me-2" />
                 )}
-                Save Availability
+                {t("td_save_availability")}
               </Button>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,8 @@ import {
   CURRICULUM_LABEL,
   GRADES,
   GRADE_LABEL,
+  subjectLabel,
+  governorateLabel,
   type Mode,
   type Curriculum,
   type Grade,
@@ -68,16 +71,23 @@ export const Route = createFileRoute("/admin")({
 });
 
 function StatusPill({ status }: { status: string }) {
+  const { t } = useI18n();
   const tone =
     status === "approved"
       ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
       : status === "rejected"
         ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
         : "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+
+  const label =
+    status === "approved"
+      ? t("status_approved")
+      : status === "rejected"
+        ? t("status_rejected")
+        : t("status_pending");
+
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${tone}`}>
-      {status}
-    </span>
+    <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${tone}`}>{label}</span>
   );
 }
 
@@ -120,6 +130,8 @@ function Chips<T extends string>({
 // Add Teacher Form — admin-only direct teacher creation
 // ════════════════════════════════════════════════════════════════════════════════
 function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
+  const { t, lang } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
   const createTeacher = useServerFn(adminCreateTeacher);
 
   const [fullName, setFullName] = useState("");
@@ -171,7 +183,7 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
       curricula.length === 0 ||
       grades.length === 0
     ) {
-      toast.error("Please fill all required fields.");
+      toast.error(t("required_fields"));
       return;
     }
     setBusy(true);
@@ -195,7 +207,7 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
           ownerEmail: ownerEmail.trim() || undefined,
         },
       });
-      toast.success(`Teacher "${fullName}" created successfully.`);
+      toast.success(t("admin_toast_created", { fullName }));
       reset();
       onCreated();
     } catch (err) {
@@ -209,22 +221,22 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
     <form onSubmit={submit} className="mt-4 space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="at-fn">Full name (English) *</Label>
+          <Label htmlFor="at-fn">{t("full_name")} *</Label>
           <Input id="at-fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="at-fnar">Full name (Arabic)</Label>
+          <Label htmlFor="at-fnar">{t("full_name_ar")}</Label>
           <Input id="at-fnar" value={fullNameAr} onChange={(e) => setFullNameAr(e.target.value)} />
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="at-phone">Phone</Label>
+          <Label htmlFor="at-phone">{t("phone")}</Label>
           <Input id="at-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="at-email">Owner email (optional)</Label>
+          <Label htmlFor="at-email">{t("admin_owner_email_label")}</Label>
           <Input
             id="at-email"
             type="email"
@@ -232,56 +244,54 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
             onChange={(e) => setOwnerEmail(e.target.value)}
             placeholder="user@example.com"
           />
-          <p className="text-xs text-muted-foreground">
-            If this teacher has a Droosy account, enter their email to link it.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("admin_owner_email_sub")}</p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
-          <Label>Subject *</Label>
+          <Label>{t("subject")} *</Label>
           <Select value={subject} onValueChange={setSubject}>
             <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
+              <SelectValue placeholder={t("select_subject")} />
             </SelectTrigger>
             <SelectContent>
               {SUBJECTS.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.label.en}
+                  {L(s.label)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Governorate *</Label>
+          <Label>{t("governorate")} *</Label>
           <Select value={governorate} onValueChange={setGovernorate}>
             <SelectTrigger>
-              <SelectValue placeholder="Select governorate" />
+              <SelectValue placeholder={t("select_governorate")} />
             </SelectTrigger>
             <SelectContent>
               {GOVERNORATES.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
-                  {g.label.en}
+                  {L(g.label)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="at-area">Area / district *</Label>
+          <Label htmlFor="at-area">{t("area")} *</Label>
           <Input id="at-area" value={area} onChange={(e) => setArea(e.target.value)} />
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="at-cn">Center name</Label>
+          <Label htmlFor="at-cn">{t("center_name")}</Label>
           <Input id="at-cn" value={centerName} onChange={(e) => setCenterName(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="at-ca">Center address</Label>
+          <Label htmlFor="at-ca">{t("center_address")}</Label>
           <Input
             id="at-ca"
             value={centerAddress}
@@ -292,7 +302,7 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="at-price">Price per session (EGP) *</Label>
+          <Label htmlFor="at-price">{t("price")} *</Label>
           <Input
             id="at-price"
             type="number"
@@ -302,7 +312,7 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="at-platform">Platform URL</Label>
+          <Label htmlFor="at-platform">{t("platform_url")}</Label>
           <Input
             id="at-platform"
             value={platformUrl}
@@ -312,37 +322,37 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>Lesson types *</Label>
+        <Label>{t("lesson_types")} *</Label>
         <Chips
           items={MODES}
-          label={(v) => MODE_LABEL[v].en}
+          label={(v) => L(MODE_LABEL[v])}
           selected={modes}
           onToggle={(v) => toggle(v, modes, setModes)}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label>Curricula *</Label>
+        <Label>{t("curricula")} *</Label>
         <Chips
           items={CURRICULA}
-          label={(v) => CURRICULUM_LABEL[v].en}
+          label={(v) => L(CURRICULUM_LABEL[v])}
           selected={curricula}
           onToggle={(v) => toggle(v, curricula, setCurricula)}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label>Grade levels *</Label>
+        <Label>{t("grades")} *</Label>
         <Chips
           items={GRADES}
-          label={(v) => GRADE_LABEL[v].en}
+          label={(v) => L(GRADE_LABEL[v])}
           selected={grades}
           onToggle={(v) => toggle(v, grades, setGrades)}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="at-bio">Bio / about</Label>
+        <Label htmlFor="at-bio">{t("bio")}</Label>
         <Textarea
           id="at-bio"
           value={bio}
@@ -353,8 +363,12 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
       </div>
 
       <Button type="submit" disabled={busy} className="w-full sm:w-auto">
-        {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-        Create teacher
+        {busy ? (
+          <Loader2 size={16} className="animate-spin me-2" />
+        ) : (
+          <Plus size={16} className="me-2" />
+        )}
+        {t("admin_create_teacher_btn")}
       </Button>
     </form>
   );
@@ -365,6 +379,9 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
 // ════════════════════════════════════════════════════════════════════════════════
 function AdminPage() {
   const { user, authReady } = useDroosy();
+  const { t, lang, pick } = useI18n();
+  const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
+
   const fetchApps = useServerFn(listApplications);
   const fetchTeachers = useServerFn(listAllTeachersAdmin);
   const review = useServerFn(reviewApplication);
@@ -402,7 +419,9 @@ function AdminPage() {
     setBusy(id);
     try {
       await review({ data: { id, decision, note: notes[id] ?? "" } });
-      toast.success(decision === "approved" ? "Teacher approved" : "Application rejected");
+      toast.success(
+        decision === "approved" ? t("admin_toast_approved") : t("admin_toast_rejected"),
+      );
       await load();
     } catch (err) {
       toast.error((err as Error).message);
@@ -416,7 +435,7 @@ function AdminPage() {
       <Header />
       <main className="mx-auto max-w-5xl px-4 py-12">
         <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-secondary-foreground">
-          <ShieldCheck size={14} /> Admin
+          <ShieldCheck size={14} /> {t("admin_badge")}
         </span>
 
         {/* ── Add Teacher section ──────────────────────────────────── */}
@@ -431,10 +450,10 @@ function AdminPage() {
                 <Plus size={18} />
               </span>
               <div>
-                <h2 className="text-lg font-extrabold text-foreground">Add Teacher</h2>
-                <p className="text-sm text-muted-foreground">
-                  Directly create a new teacher profile without the application process.
-                </p>
+                <h2 className="text-lg font-extrabold text-foreground">
+                  {t("admin_add_teacher_title")}
+                </h2>
+                <p className="text-sm text-muted-foreground">{t("admin_add_teacher_sub")}</p>
               </div>
             </div>
             {showAddForm ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -442,7 +461,7 @@ function AdminPage() {
 
           {showAddForm && (
             <div className="mt-2 rounded-2xl border border-border bg-card p-5">
-              <AddTeacherForm onCreated={() => toast.success("Teacher added to directory.")} />
+              <AddTeacherForm onCreated={() => toast.success(t("admin_toast_added"))} />
             </div>
           )}
         </section>
@@ -459,10 +478,10 @@ function AdminPage() {
                 <ShieldCheck size={18} />
               </span>
               <div>
-                <h2 className="text-lg font-extrabold text-foreground">Manage Teachers</h2>
-                <p className="text-sm text-muted-foreground">
-                  View existing teachers and edit their profiles or availability.
-                </p>
+                <h2 className="text-lg font-extrabold text-foreground">
+                  {t("admin_manage_teachers_title")}
+                </h2>
+                <p className="text-sm text-muted-foreground">{t("admin_manage_teachers_sub")}</p>
               </div>
             </div>
             {showTeacherList ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -472,28 +491,29 @@ function AdminPage() {
             <div className="mt-2 rounded-2xl border border-border bg-card p-5">
               {teachers === null ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 size={16} className="animate-spin" /> Loading teachers...
+                  <Loader2 size={16} className="animate-spin" /> {t("admin_loading_teachers")}
                 </div>
               ) : teachers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No teachers found.</p>
+                <p className="text-sm text-muted-foreground">{t("admin_no_teachers")}</p>
               ) : (
                 <div className="space-y-4">
-                  {teachers.map((t) => (
+                  {teachers.map((tRow) => (
                     <div
-                      key={t.id}
+                      key={tRow.id}
                       className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 p-4"
                     >
                       <div>
                         <h3 className="font-bold text-foreground">
-                          {t.name} {t.name_ar ? `• ${t.name_ar}` : ""}
+                          {pick(tRow.name, tRow.name_ar ?? "")}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {t.subject} • {t.area}, {t.region}
+                          {L(subjectLabel(tRow.subject))} • {tRow.area},{" "}
+                          {L(governorateLabel(tRow.region))}
                         </p>
                       </div>
                       <Button asChild variant="outline" size="sm">
-                        <Link to="/teacher/dashboard" search={{ teacherId: t.id }}>
-                          Edit Teacher
+                        <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
+                          {t("admin_edit_teacher_btn")}
                         </Link>
                       </Button>
                     </div>
@@ -507,35 +527,33 @@ function AdminPage() {
         {/* ── Teacher Applications section ──────────────────────────── */}
         <section className="mt-10">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            Teacher applications
+            {t("admin_apps_title")}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Review submitted documents, then approve to publish a verified teacher profile.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("admin_apps_sub")}</p>
 
           {authReady && !user && (
             <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm">
-              <p className="text-foreground">Sign in with your admin account to continue.</p>
+              <p className="text-foreground">{t("admin_signin_prompt")}</p>
               <Button asChild className="mt-3">
-                <Link to="/auth">Sign in</Link>
+                <Link to="/auth">{t("nav_signin")}</Link>
               </Button>
             </div>
           )}
 
           {user && denied && (
             <p className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
-              This account does not have admin access.
+              {t("admin_no_access")}
             </p>
           )}
 
           {user && !denied && apps === null && (
             <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 size={16} className="animate-spin" /> Loading applications…
+              <Loader2 size={16} className="animate-spin" /> {t("admin_loading_apps")}
             </div>
           )}
 
           {user && !denied && apps?.length === 0 && (
-            <p className="mt-8 text-sm text-muted-foreground">No applications yet.</p>
+            <p className="mt-8 text-sm text-muted-foreground">{t("admin_no_apps")}</p>
           )}
 
           <div className="mt-8 space-y-5">
@@ -548,7 +566,8 @@ function AdminPage() {
                       {a.fullNameAr ? ` · ${a.fullNameAr}` : ""}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      {a.subject} · {a.area}, {a.governorate} · {a.pricePerSession} EGP/session
+                      {L(subjectLabel(a.subject))} · {a.area}, {L(governorateLabel(a.governorate))}{" "}
+                      · {a.pricePerSession} {t("per_session")}
                     </p>
                   </div>
                   <StatusPill status={a.status} />
@@ -556,23 +575,27 @@ function AdminPage() {
 
                 <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                   <div>
-                    <dt className="text-muted-foreground">Phone</dt>
+                    <dt className="text-muted-foreground">{t("phone")}</dt>
                     <dd className="font-semibold text-foreground">{a.phone}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">National ID (last 4)</dt>
+                    <dt className="text-muted-foreground">{t("admin_national_id_last4")}</dt>
                     <dd className="font-semibold text-foreground">{a.nationalIdLast4}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Center</dt>
+                    <dt className="text-muted-foreground">{t("admin_center")}</dt>
                     <dd className="font-semibold text-foreground">
                       {a.centerName || "—"} {a.centerAddress ? `· ${a.centerAddress}` : ""}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Modes / Curricula / Grades</dt>
+                    <dt className="text-muted-foreground">{t("admin_modes_curricula_grades")}</dt>
                     <dd className="font-semibold text-foreground">
-                      {[a.modes.join(", "), a.curricula.join(", "), a.grades.join(", ")]
+                      {[
+                        a.modes.map((m) => L(MODE_LABEL[m as Mode])).join(", "),
+                        a.curricula.map((c) => L(CURRICULUM_LABEL[c as Curriculum])).join(", "),
+                        a.grades.map((g) => L(GRADE_LABEL[g as Grade])).join(", "),
+                      ]
                         .filter(Boolean)
                         .join(" — ") || "—"}
                     </dd>
@@ -589,7 +612,7 @@ function AdminPage() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-sm font-semibold text-foreground hover:bg-muted"
                     >
-                      <FileText size={14} /> National ID
+                      <FileText size={14} /> {t("id_document")}
                     </a>
                   )}
                   {a.credentialDocumentUrl && (
@@ -599,14 +622,14 @@ function AdminPage() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-sm font-semibold text-foreground hover:bg-muted"
                     >
-                      <FileText size={14} /> Teaching credential
+                      <FileText size={14} /> {t("credential_document")}
                     </a>
                   )}
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Input
-                    placeholder="Review note (optional)"
+                    placeholder={t("admin_review_note_ph")}
                     value={notes[a.id] ?? ""}
                     onChange={(e) => setNotes((p) => ({ ...p, [a.id]: e.target.value }))}
                   />
@@ -617,14 +640,14 @@ function AdminPage() {
                       ) : (
                         <Check size={16} />
                       )}
-                      Approve
+                      {t("admin_approve")}
                     </Button>
                     <Button
                       variant="outline"
                       disabled={busy === a.id}
                       onClick={() => decide(a.id, "rejected")}
                     >
-                      <X size={16} /> Reject
+                      <X size={16} /> {t("admin_reject")}
                     </Button>
                   </div>
                 </div>

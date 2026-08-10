@@ -19,11 +19,12 @@ import {
   GRADE_LABEL,
   MODE_LABEL,
   initials,
+  relativeDate,
   type Teacher,
 } from "@/lib/droosy-data";
 import { getCatalog } from "@/lib/droosy.functions";
 import { useDroosy } from "@/lib/droosy-store";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, dayLabel } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -65,10 +66,10 @@ export const Route = createFileRoute("/teacher/$teacherId")({
 
 function TeacherProfile() {
   const { teacher } = Route.useLoaderData() as { teacher: Teacher };
-  const { getTeacher, addBooking, reviews, addReview, user, bookings, cart, toggleCart } =
-    useDroosy();
+  const { addBooking, reviews, addReview, bookings, cart, toggleCart } = useDroosy();
   const { t, lang, pick } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
+
   const [slot, setSlot] = useState<{ day: string; time: string } | null>(null);
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");
@@ -114,7 +115,9 @@ function TeacherProfile() {
                   <span className="flex items-center gap-2">
                     <Stars value={teacher.rating} />
                     <strong>{teacher.rating.toFixed(1)}</strong>
-                    <span className="text-muted-foreground">({list.length} reviews)</span>
+                    <span className="text-muted-foreground">
+                      {t("tp_reviews_count", { n: list.length })}
+                    </span>
                   </span>
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <Users size={15} /> {teacher.students.toLocaleString()} {t("students")}
@@ -162,16 +165,16 @@ function TeacherProfile() {
                   {teacher.manasa && (
                     <Button asChild variant="outline" size="sm">
                       <a href={teacher.manasa} target="_blank" rel="noreferrer">
-                        <MonitorPlay size={15} /> Open Manasa
-                        <ExternalLink size={13} />
+                        <MonitorPlay size={15} /> {t("tp_open_manasa")}
+                        <ExternalLink size={13} className="ms-1 rtl-flip" />
                       </a>
                     </Button>
                   )}
                   {teacher.youtube && (
                     <Button asChild variant="outline" size="sm">
                       <a href={teacher.youtube} target="_blank" rel="noreferrer">
-                        <Youtube size={15} /> YouTube channel
-                        <ExternalLink size={13} />
+                        <Youtube size={15} /> {t("tp_youtube_channel")}
+                        <ExternalLink size={13} className="ms-1 rtl-flip" />
                       </a>
                     </Button>
                   )}
@@ -180,14 +183,14 @@ function TeacherProfile() {
                     variant={inCart ? "secondary" : "default"}
                     onClick={() => toggleCart(teacher.id)}
                   >
-                    {inCart ? "Added to my package" : "Add to my package"}
+                    {inCart ? t("tp_in_package") : t("tp_add_package")}
                   </Button>
                 </div>
               </div>
             </section>
 
             <section className="surface-card p-6">
-              <h2 className="text-lg font-extrabold">Center location</h2>
+              <h2 className="text-lg font-extrabold">{t("tp_center_location")}</h2>
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin size={15} /> {teacher.centerAddress}
               </p>
@@ -205,69 +208,69 @@ function TeacherProfile() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Get directions <ExternalLink size={13} />
+                  {t("tp_get_directions")} <ExternalLink size={13} className="ms-1 rtl-flip" />
                 </a>
               </Button>
             </section>
 
             <section className="surface-card p-6">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                <h2 className="min-w-0 text-lg font-extrabold">Student reviews</h2>
+                <h2 className="min-w-0 text-lg font-extrabold">{t("tp_student_reviews")}</h2>
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline">
-                      Write a review
+                      {t("tp_write_review")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Rate {teacher.name}</DialogTitle>
-                      <DialogDescription>
-                        Your honest feedback helps other students choose calmly.
-                      </DialogDescription>
+                      <DialogTitle>
+                        {t("tp_rate_teacher", { name: pick(teacher.name, teacher.nameAr) })}
+                      </DialogTitle>
+                      <DialogDescription>{t("tp_rate_sub")}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <Stars value={rating} size={26} onSelect={setRating} />
                       <Input
                         value={student}
                         onChange={(e) => setStudent(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={t("tp_your_name")}
                       />
                       <Textarea
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="What was helpful about the sessions?"
+                        placeholder={t("tp_review_ph")}
                         rows={4}
                       />
                       <Button
                         className="w-full"
                         onClick={() => {
                           if (!text.trim()) {
-                            toast.error("Please write a short review first.");
+                            toast.error(t("tp_val_write_review"));
                             return;
                           }
                           void addReview({
                             teacherId: teacher.id,
-                            student: student.trim() || "Anonymous student",
+                            student: student.trim() || t("tp_toast_anon"),
                             rating,
                             text: text.trim(),
                           }).then((res) => {
                             if (res === "auth") {
-                              toast.error("Sign in to publish a review.");
+                              toast.error(t("tp_toast_auth_review"));
                               return;
                             }
                             if (res !== "ok") {
-                              toast.error("Could not publish your review.");
+                              toast.error(t("tp_toast_err_review"));
                               return;
                             }
                             setText("");
                             setStudent("");
                             setOpen(false);
-                            toast.success("Thanks! Your review is published.");
+                            toast.success(t("tp_toast_ok_review"));
                           });
                         }}
                       >
-                        Publish review
+                        {t("tp_publish_review")}
                       </Button>
                     </div>
                   </DialogContent>
@@ -276,7 +279,7 @@ function TeacherProfile() {
 
               <ul className="mt-5 space-y-4">
                 {list.length === 0 && (
-                  <li className="text-sm text-muted-foreground">No reviews yet — be the first.</li>
+                  <li className="text-sm text-muted-foreground">{t("tp_no_reviews")}</li>
                 )}
                 {list.map((r) => (
                   <li key={r.id} className="rounded-2xl bg-muted/50 p-4">
@@ -284,12 +287,14 @@ function TeacherProfile() {
                       <p className="min-w-0 truncate text-sm font-bold">
                         {r.student}{" "}
                         {r.verified && (
-                          <span className="ml-1 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
-                            Verified
+                          <span className="ms-1 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+                            {t("verified")}
                           </span>
                         )}
                       </p>
-                      <span className="shrink-0 text-xs text-muted-foreground">{r.date}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {relativeDate(r.date, lang)}
+                      </span>
                     </div>
                     <div className="mt-1">
                       <Stars value={r.rating} />
@@ -304,7 +309,7 @@ function TeacherProfile() {
           <aside className="lg:sticky lg:top-24 lg:h-fit">
             <div className="surface-card p-6">
               <h2 className="flex items-center gap-2 text-lg font-extrabold">
-                <CalendarDays size={18} className="text-primary" /> Pick a slot
+                <CalendarDays size={18} className="text-primary" /> {t("tp_pick_slot")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {teacher.pricePerSession.toLocaleString()} {t("per_session")}
@@ -313,7 +318,7 @@ function TeacherProfile() {
                 {teacher.slots.map((d) => (
                   <div key={d.day}>
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      {d.day}
+                      {dayLabel(d.day, lang)}
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-2">
                       {d.times.map((time) => {
@@ -345,9 +350,9 @@ function TeacherProfile() {
                             }`}
                             title={
                               isBooked
-                                ? "You already booked this slot"
+                                ? t("tp_already_booked_tt")
                                 : isConflict
-                                  ? "You have another class at this time"
+                                  ? t("tp_conflict_tt")
                                   : undefined
                             }
                           >
@@ -363,7 +368,7 @@ function TeacherProfile() {
                 className="mt-6 w-full"
                 onClick={() => {
                   if (!slot) {
-                    toast.error("Choose a day and time first.");
+                    toast.error(t("tp_val_choose_slot"));
                     return;
                   }
                   void addBooking({
@@ -371,20 +376,32 @@ function TeacherProfile() {
                     day: slot.day,
                     time: slot.time,
                   }).then((res) => {
-                    if (res === "auth") toast.error("Sign in to book a session.");
+                    if (res === "auth") toast.error(t("tp_toast_auth_book"));
                     else if (res !== "ok")
-                      toast.error(`You already have a class on ${slot.day} at ${slot.time}.`);
-                    else toast.success(`Booked ${slot.day} ${slot.time} with ${teacher.name}.`);
+                      toast.error(
+                        t("tp_toast_conflict_book", {
+                          day: dayLabel(slot.day, lang),
+                          time: slot.time,
+                        }),
+                      );
+                    else
+                      toast.success(
+                        t("tp_toast_ok_book", {
+                          day: dayLabel(slot.day, lang),
+                          time: slot.time,
+                          name: pick(teacher.name, teacher.nameAr),
+                        }),
+                      );
                   });
                 }}
               >
-                Book this session
+                {t("tp_book_btn")}
               </Button>
               <Link
                 to="/schedule"
                 className="mt-3 block text-center text-sm font-semibold text-primary"
               >
-                View my schedule
+                {t("tp_view_schedule")}
               </Link>
             </div>
           </aside>

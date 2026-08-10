@@ -41,6 +41,7 @@ type Store = {
 
   user: User | null;
   profile: Profile | null;
+  isAdmin: boolean;
   authReady: boolean;
   signOut: () => Promise<void>;
 
@@ -72,6 +73,7 @@ export function DroosyProvider({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>(catalog.reviews);
@@ -95,16 +97,19 @@ export function DroosyProvider({
   useEffect(() => {
     if (!user) {
       setProfile(null);
+      setIsAdmin(false);
       setBookings([]);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const [{ data: prof }, { data: books }] = await Promise.all([
+      const [{ data: prof }, { data: books }, { data: roles }] = await Promise.all([
         supabase.from("profiles").select("id, full_name, role").eq("id", user.id).maybeSingle(),
         supabase.from("bookings").select("id, teacher_id, day, time, bundle_id"),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
       if (cancelled) return;
+      setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
       if (prof) {
         setProfile({
           id: prof.id,
@@ -162,11 +167,13 @@ export function DroosyProvider({
 
       user,
       profile,
+      isAdmin,
       authReady,
       signOut: async () => {
         await supabase.auth.signOut();
         setUser(null);
         setProfile(null);
+        setIsAdmin(false);
         setBookings([]);
       },
 
@@ -238,6 +245,7 @@ export function DroosyProvider({
     getTeacher,
     user,
     profile,
+    isAdmin,
     authReady,
     bookings,
     reviews,

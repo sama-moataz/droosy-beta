@@ -10,7 +10,7 @@ import {
   Sun,
   Languages,
   GraduationCap,
-} from "lucide-react";
+, ShieldCheck} from "lucide-react";
 import { initials, GOVERNORATES } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { useI18n } from "@/lib/i18n";
@@ -144,6 +144,16 @@ export function Header() {
               </span>
             )}
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
+              activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
+            >
+              <ShieldCheck size={16} />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
+          )}
           {user ? (
             <div className="ms-1 flex items-center gap-1.5">
               <span

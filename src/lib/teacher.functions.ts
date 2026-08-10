@@ -81,8 +81,7 @@ export const updateTeacherProfile = createServerFn({ method: "POST" })
       throw new Error("Forbidden: You can only edit your own teacher profile");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: upErr } = await supabaseAdmin
+    const { error: upErr } = await context.supabase
       .from("teachers")
       .update({
         name: data.name,
@@ -149,8 +148,7 @@ export const updateTeacherSlots = createServerFn({ method: "POST" })
       throw new Error("Forbidden: You can only edit your own teacher profile");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: upErr } = await supabaseAdmin
+    const { error: upErr } = await context.supabase
       .from("teachers")
       .update({
         slots: data.slots as unknown as Json,

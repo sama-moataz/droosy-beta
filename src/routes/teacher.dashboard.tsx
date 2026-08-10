@@ -127,7 +127,7 @@ function TeacherDashboard() {
 
   const loadProfile = useCallback(async () => {
     try {
-      const data = await getProfile({ data: { teacherId: searchTeacherId } });
+      const data = await getProfile(searchTeacherId ? { data: { teacherId: searchTeacherId } } : undefined);
       if (!data) {
         setLoading(false);
         return;

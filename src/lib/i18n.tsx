@@ -22,6 +22,7 @@ export const STRINGS: Dict = {
   nav_schedule: { en: "My Schedule", ar: "جدولي" },
   nav_packages: { en: "Packages", ar: "الباقات" },
   nav_teach: { en: "Teach on Droosy", ar: "سجّل كمدرس" },
+  nav_teacher_dashboard: { en: "Dashboard", ar: "لوحة التحكم" },
   nav_add_teacher: { en: "Add Teacher", ar: "إضافة مدرس" },
   nav_signin: { en: "Sign in", ar: "تسجيل الدخول" },
   nav_signout: { en: "Sign out", ar: "تسجيل الخروج" },

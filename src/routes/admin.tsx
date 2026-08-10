@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { Database } from "@/integrations/supabase/types";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ import {
   listApplications,
   reviewApplication,
   adminCreateTeacher,
+  listAllTeachersAdmin,
   type AdminApplication,
 } from "@/lib/admin.functions";
 
@@ -364,25 +366,32 @@ function AddTeacherForm({ onCreated }: { onCreated: () => void }) {
 function AdminPage() {
   const { user, authReady } = useDroosy();
   const fetchApps = useServerFn(listApplications);
+  const fetchTeachers = useServerFn(listAllTeachersAdmin);
   const review = useServerFn(reviewApplication);
 
   const [apps, setApps] = useState<AdminApplication[] | null>(null);
+  const [teachers, setTeachers] = useState<
+    Database["public"]["Tables"]["teachers"]["Row"][] | null
+  >(null);
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showTeacherList, setShowTeacherList] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const rows = await fetchApps();
+      const [rows, tRows] = await Promise.all([fetchApps(), fetchTeachers()]);
       setApps(rows);
+      setTeachers(tRows);
       setDenied(false);
     } catch (err) {
       console.error(err);
       setDenied(true);
       setApps([]);
+      setTeachers([]);
     }
-  }, [fetchApps]);
+  }, [fetchApps, fetchTeachers]);
 
   useEffect(() => {
     if (!authReady || !user) return;
@@ -434,6 +443,63 @@ function AdminPage() {
           {showAddForm && (
             <div className="mt-2 rounded-2xl border border-border bg-card p-5">
               <AddTeacherForm onCreated={() => toast.success("Teacher added to directory.")} />
+            </div>
+          )}
+        </section>
+
+        {/* ── Manage Teachers section ──────────────────────────────────── */}
+        <section className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowTeacherList((v) => !v)}
+            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:bg-muted/50"
+          >
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-xl gradient-brand text-on-brand">
+                <ShieldCheck size={18} />
+              </span>
+              <div>
+                <h2 className="text-lg font-extrabold text-foreground">Manage Teachers</h2>
+                <p className="text-sm text-muted-foreground">
+                  View existing teachers and edit their profiles or availability.
+                </p>
+              </div>
+            </div>
+            {showTeacherList ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {showTeacherList && (
+            <div className="mt-2 rounded-2xl border border-border bg-card p-5">
+              {teachers === null ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 size={16} className="animate-spin" /> Loading teachers...
+                </div>
+              ) : teachers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No teachers found.</p>
+              ) : (
+                <div className="space-y-4">
+                  {teachers.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 p-4"
+                    >
+                      <div>
+                        <h3 className="font-bold text-foreground">
+                          {t.name} {t.name_ar ? `• ${t.name_ar}` : ""}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {t.subject} • {t.area}, {t.region}
+                        </p>
+                      </div>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/teacher/dashboard" search={{ teacherId: t.id }}>
+                          Edit Teacher
+                        </Link>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>

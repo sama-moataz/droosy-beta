@@ -119,16 +119,16 @@ export function Header() {
           <IconButton onClick={toggleTheme} label={t("theme_toggle")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          {/* Teach on Droosy: only for logged-out visitors OR users with the 'teacher' role (but NOT admins) */}
           {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
             <Link
-              to={user && teacherId ? "/teacher/$teacherId" : "/teach"}
-              params={user && teacherId ? { teacherId } : undefined}
+              to={user && teacherId ? "/teacher/dashboard" : "/teach"}
               className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
               activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
             >
               <GraduationCap size={16} />
-              <span className="hidden lg:inline">{t("nav_teach")}</span>
+              <span className="hidden lg:inline">
+                {user && teacherId ? t("nav_teacher_dashboard") : t("nav_teach")}
+              </span>
             </Link>
           )}
           <Link

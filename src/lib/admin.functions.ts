@@ -89,6 +89,23 @@ export const listApplications = createServerFn({ method: "GET" })
     );
   });
 
+export const listAllTeachersAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (admin !== true) throw new Error("Forbidden");
+
+    const { data, error } = await context.supabase
+      .from("teachers")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  });
+
 export const reviewApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -280,4 +297,80 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
     }
 
     return { ok: true, teacherId };
+  });
+
+export const adminUpdateTeacher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string(),
+        fullName: z.string().trim().min(2).max(90),
+        fullNameAr: z.string().trim().max(90).optional().default(""),
+        phone: z.string().trim().max(20).optional().default(""),
+        subject: z.string().min(1),
+        governorate: z.string().min(1),
+        area: z.string().trim().min(1).max(90),
+        centerName: z.string().trim().max(200).optional().default(""),
+        centerAddress: z.string().trim().max(300).optional().default(""),
+        platformUrl: z.string().trim().max(500).optional().default(""),
+        pricePerSession: z.number().min(0).max(100000),
+        bio: z.string().trim().max(1200).optional().default(""),
+        modes: z.array(z.string()).min(1),
+        curricula: z.array(z.string()).min(1),
+        grades: z.array(z.string()).min(1),
+        ownerEmail: z.string().email().optional().or(z.literal("")),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (admin !== true) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let ownerId: string | null = null;
+    if (data.ownerEmail) {
+      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+      if (listErr) throw new Error("Failed to look up user accounts");
+      const match = userList.users.find(
+        (u) => u.email?.toLowerCase() === data.ownerEmail!.toLowerCase(),
+      );
+      if (!match) throw new Error(`No user account found for ${data.ownerEmail}`);
+      ownerId = match.id;
+    }
+
+    const { error: upErr } = await supabaseAdmin
+      .from("teachers")
+      .update({
+        owner_id: ownerId,
+        name: data.fullName,
+        name_ar: data.fullNameAr || "",
+        subject: data.subject,
+        area: data.area,
+        region: data.governorate,
+        center_name: data.centerName || "",
+        center_address: data.centerAddress || "",
+        map_query: [data.centerName, data.area, data.governorate, "Egypt"]
+          .filter(Boolean)
+          .join(", "),
+        modes: data.modes,
+        curricula: data.curricula,
+        grades: data.grades,
+        price_per_session: data.pricePerSession,
+        bio: data.bio || "",
+        platform_url: data.platformUrl || null,
+      })
+      .eq("id", data.id);
+
+    if (upErr) throw upErr;
+
+    if (ownerId) {
+      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
+    }
+
+    return { ok: true };
   });

@@ -150,12 +150,29 @@ function TeachPage() {
     set: (v: T[]) => void,
   ) => set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
 
+  const freshSession = async () => {
+    const { data } = await supabase.auth.getSession();
+    const expiresAt = data.session?.expires_at ?? 0;
+    // Refresh when the token is expired or about to expire (also covers client clock skew,
+    // which the storage API reports as "exp timecheck failed").
+    if (!data.session || expiresAt * 1000 - Date.now() < 5 * 60 * 1000) {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      return refreshed.session ?? data.session ?? null;
+    }
+    return data.session;
+  };
+
   const upload = async (file: File, kind: string) => {
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `${user!.id}/${kind}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("teacher-verification")
-      .upload(path, file, { upsert: true });
+    const attempt = async () =>
+      supabase.storage.from("teacher-verification").upload(path, file, { upsert: true });
+
+    let { error } = await attempt();
+    if (error && /exp|jwt|expired/i.test(error.message)) {
+      await supabase.auth.refreshSession();
+      ({ error } = await attempt());
+    }
     if (error) throw error;
     return path;
   };

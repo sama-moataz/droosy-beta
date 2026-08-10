@@ -9,7 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Redirect targets are whitelisted (not an arbitrary string) so this can never become an
+// open redirect, and so it stays valid against the typed router route tree.
+const ALLOWED_REDIRECTS = ["/", "/teach"] as const;
+type RedirectTarget = (typeof ALLOWED_REDIRECTS)[number];
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: RedirectTarget } => {
+    const r = search["redirect"];
+    return typeof r === "string" &&
+      (ALLOWED_REDIRECTS as readonly string[]).includes(r)
+      ? { redirect: r as RedirectTarget }
+      : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign in or create your account — Droosy" },
@@ -40,16 +52,17 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">("student");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const { user, authReady } = useDroosy();
+  const { redirect } = Route.useSearch();
+  const destination = redirect ?? "/";
   const navigate = useNavigate();
   const router = useRouter();
 
   useEffect(() => {
-    if (authReady && user) void navigate({ to: "/", replace: true });
-  }, [authReady, user, navigate]);
+    if (authReady && user) void navigate({ to: destination, replace: true });
+  }, [authReady, user, destination, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +81,10 @@ function AuthPage() {
           password: pass.data,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: name.data, role },
+            // Note: there is intentionally no "role" here. Becoming a teacher on Droosy only
+            // happens through the "Teach on Droosy" application + admin verification flow, not
+            // by self-selecting a role at signup — every new account starts as a student.
+            data: { full_name: name.data },
           },
         });
         if (error) { toast.error(error.message); return; }
@@ -78,7 +94,7 @@ function AuthPage() {
         }
         toast.success("Welcome to Droosy!");
         router.invalidate();
-        void navigate({ to: "/", replace: true });
+        void navigate({ to: destination, replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: mail.data,
@@ -87,7 +103,7 @@ function AuthPage() {
         if (error) { toast.error(error.message); return; }
         toast.success("Signed in.");
         router.invalidate();
-        void navigate({ to: "/", replace: true });
+        void navigate({ to: destination, replace: true });
       }
     } finally {
       setBusy(false);
@@ -136,38 +152,17 @@ function AuthPage() {
 
               <form className="mt-6 space-y-4" onSubmit={submit}>
                 {mode === "signup" && (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="fullName">Full name</Label>
-                      <Input
-                        id="fullName"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Rokaya Ahmad"
-                        maxLength={80}
-                        autoComplete="name"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>I am a</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(["student", "teacher"] as const).map((r) => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => setRole(r)}
-                            className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-colors ${
-                              role === r
-                                ? "gradient-brand text-on-brand"
-                                : "bg-muted text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            {r}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName">Full name</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Rokaya Ahmad"
+                      maxLength={80}
+                      autoComplete="name"
+                    />
+                  </div>
                 )}
 
                 <div className="space-y-1.5">

@@ -42,6 +42,8 @@ type Store = {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  /** id of the `teachers` row owned by this user (via teachers.owner_id), or null if they are not (yet) an approved teacher. */
+  teacherId: string | null;
   authReady: boolean;
   signOut: () => Promise<void>;
 
@@ -74,6 +76,7 @@ export function DroosyProvider({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [teacherId, setTeacherId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>(catalog.reviews);
@@ -98,18 +101,35 @@ export function DroosyProvider({
     if (!user) {
       setProfile(null);
       setIsAdmin(false);
+      setTeacherId(null);
       setBookings([]);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const [{ data: prof }, { data: books }, { data: roles }] = await Promise.all([
+      const [
+        { data: prof, error: profErr },
+        { data: books, error: booksErr },
+        { data: roles, error: rolesErr },
+        { data: ownedTeacher, error: teacherErr },
+      ] = await Promise.all([
         supabase.from("profiles").select("id, full_name, role").eq("id", user.id).maybeSingle(),
         supabase.from("bookings").select("id, teacher_id, day, time, bundle_id"),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
+        // Canonical "is this user an existing teacher" signal: a teachers row they own.
+        // Do NOT use profiles.role for this — it can be set at signup time and can drift
+        // from the real teachers/owner_id relationship created by admin approval.
+        supabase.from("teachers").select("id").eq("owner_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
+      // These queries silently returning empty results is indistinguishable from "no data"
+      // unless we log failures — surface them so role/teacher detection issues are visible.
+      if (profErr) console.error("[droosy] failed to load profile", profErr);
+      if (booksErr) console.error("[droosy] failed to load bookings", booksErr);
+      if (rolesErr) console.error("[droosy] failed to load user_roles", rolesErr);
+      if (teacherErr) console.error("[droosy] failed to load owned teacher", teacherErr);
       setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
+      setTeacherId(ownedTeacher?.id ?? null);
       if (prof) {
         setProfile({
           id: prof.id,
@@ -168,12 +188,14 @@ export function DroosyProvider({
       user,
       profile,
       isAdmin,
+      teacherId,
       authReady,
       signOut: async () => {
         await supabase.auth.signOut();
         setUser(null);
         setProfile(null);
         setIsAdmin(false);
+        setTeacherId(null);
         setBookings([]);
       },
 
@@ -231,11 +253,9 @@ export function DroosyProvider({
       location,
       setLocation,
       cart,
-      toggleCart: (teacherId) =>
+      toggleCart: (id) =>
         setCart((prev) =>
-          prev.includes(teacherId)
-            ? prev.filter((t) => t !== teacherId)
-            : [...prev, teacherId],
+          prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
         ),
       clearCart: () => setCart([]),
     };
@@ -246,6 +266,7 @@ export function DroosyProvider({
     user,
     profile,
     isAdmin,
+    teacherId,
     authReady,
     bookings,
     reviews,

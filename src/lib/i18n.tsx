@@ -105,6 +105,19 @@ export const STRINGS: Dict = {
     ar: "تم إرسال الطلب — سنراجع مستنداتك قريبًا.",
   },
   sign_in_first: { en: "Sign in first to register as a teacher.", ar: "سجّل الدخول أولًا للتسجيل كمدرس." },
+  already_teacher_title: {
+    en: "You're already a teacher on Droosy",
+    ar: "أنت بالفعل مدرس على دروسي",
+  },
+  already_teacher_body: {
+    en: "Your teacher profile is verified and live — students can already find and book you.",
+    ar: "ملفك كمدرس موثّق ومنشور بالفعل — يمكن للطلاب العثور عليك وحجز حصص معك.",
+  },
+  view_my_profile: { en: "View my public profile", ar: "عرض ملفي العام" },
+  application_rejected: {
+    en: "Your last application wasn't approved. Review your details below and submit again.",
+    ar: "لم تتم الموافقة على طلبك السابق. راجع بياناتك بالأسفل وأرسل الطلب مرة أخرى.",
+  },
   required_fields: { en: "Please fill all required fields.", ar: "من فضلك أكمل جميع الحقول المطلوبة." },
   upload_both: { en: "Please upload both documents.", ar: "من فضلك ارفع المستندين." },
   theme_toggle: { en: "Toggle dark mode", ar: "تبديل الوضع الداكن" },

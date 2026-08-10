@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Upload, CheckCircle2 } from "lucide-react";
+import { Loader2, ShieldCheck, Upload, CheckCircle2, GraduationCap } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +102,7 @@ function Chips<T extends string>({
 
 function TeachPage() {
   const { t, lang } = useI18n();
-  const { user, authReady } = useDroosy();
+  const { user, authReady, teacherId } = useDroosy();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
   const [fullName, setFullName] = useState("");
@@ -126,23 +126,26 @@ function TeachPage() {
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || teacherId) {
+      // No signed-in user, or already an approved teacher — an application status is not
+      // relevant to what we render in either case.
       setStatus(null);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("teacher_applications")
         .select("status")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (error) console.error("[teach] failed to load application status", error);
       if (!cancelled && data) setStatus(data.status);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, teacherId]);
 
   const toggle = <T extends string>(
     value: T,
@@ -260,19 +263,44 @@ function TeachPage() {
           <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm">
             <p className="text-foreground">{t("sign_in_first")}</p>
             <Button asChild className="mt-3">
-              <Link to="/auth">{t("nav_signin")}</Link>
+              <Link to="/auth" search={{ redirect: "/teach" }}>
+                {t("nav_signin")}
+              </Link>
             </Button>
           </div>
         )}
 
-        {status === "pending" && (
+        {user && teacherId && (
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm">
+            <GraduationCap size={18} className="mt-0.5 shrink-0 text-primary" />
+            <div>
+              <p className="font-semibold text-secondary-foreground">
+                {t("already_teacher_title")}
+              </p>
+              <p className="mt-1 text-secondary-foreground/80">{t("already_teacher_body")}</p>
+              <Button asChild size="sm" className="mt-3">
+                <Link to="/teacher/$teacherId" params={{ teacherId }}>
+                  {t("view_my_profile")}
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {user && !teacherId && status === "pending" && (
           <div className="mt-6 flex items-center gap-2 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm font-semibold text-secondary-foreground">
             <CheckCircle2 size={18} className="text-primary" />
             {t("application_pending")}
           </div>
         )}
 
-        {user && (
+        {user && !teacherId && status === "rejected" && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            {t("application_rejected")}
+          </div>
+        )}
+
+        {user && !teacherId && (
           <form onSubmit={submit} className="mt-8 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">

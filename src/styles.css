@@ -83,6 +83,7 @@
   --input: oklch(0.915 0.02 228);
   --ring: oklch(0.588 0.146 240.5);
   --brand-soft: oklch(0.957 0.031 224.5);
+  --on-brand: oklch(0.99 0.005 230);
   --brand-ink: oklch(0.21 0.04 258);
   --gradient-brand: linear-gradient(
     135deg,
@@ -161,6 +162,7 @@
 
 @theme inline {
   --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
   --color-brand-ink: var(--brand-ink);
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -203,6 +205,7 @@
   --muted-foreground: oklch(0.76 0.03 250);
   --ring: oklch(0.68 0.135 240.5);
   --brand-soft: oklch(0.26 0.045 245);
+  --on-brand: oklch(0.99 0.005 230);
   --brand-ink: oklch(0.96 0.01 230);
   --gradient-brand: linear-gradient(
     135deg,

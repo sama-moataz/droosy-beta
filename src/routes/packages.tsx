@@ -90,8 +90,8 @@ function Packages() {
             const open = openBundle === b.id;
             return (
               <article key={b.id} className="surface-card overflow-hidden">
-                <div className={`bg-gradient-to-br p-6 text-primary-foreground ${b.accent}`}>
-                  <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">
+                <div className={`bg-gradient-to-br p-6 text-on-brand ${b.accent}`}>
+                  <span className="rounded-full bg-on-brand/20 px-2.5 py-1 text-xs font-bold">
                     Save {Math.round(b.discount * 100)}%
                   </span>
                   <h2 className="mt-3 text-xl font-extrabold">{b.title}</h2>
@@ -114,7 +114,7 @@ function Packages() {
                             className="flex items-center gap-3 rounded-2xl bg-muted/60 p-2.5 transition-colors hover:bg-muted"
                           >
                             <span
-                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-primary-foreground ${t.accent}`}
+                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${t.accent}`}
                             >
                               {initials(t.name)}
                             </span>
@@ -171,7 +171,7 @@ function Packages() {
                     }`}
                   >
                     <span
-                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-primary-foreground ${t.accent}`}
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-on-brand ${t.accent}`}
                     >
                       {initials(t.name)}
                     </span>

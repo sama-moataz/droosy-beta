@@ -154,7 +154,7 @@ function Home() {
               onClick={() => setSubject("all")}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 subject === "all"
-                  ? "gradient-brand text-primary-foreground"
+                  ? "gradient-brand text-on-brand"
                   : "bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -166,7 +166,7 @@ function Home() {
                 onClick={() => setSubject(s.id)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   subject === s.id
-                    ? "gradient-brand text-primary-foreground"
+                    ? "gradient-brand text-on-brand"
                     : "bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -201,9 +201,9 @@ function Home() {
               <Link
                 key={b.id}
                 to="/packages"
-                className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-white shadow-[var(--shadow-lift)] ${b.accent}`}
+                className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-on-brand shadow-[var(--shadow-lift)] ${b.accent}`}
               >
-                <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">
+                <span className="rounded-full bg-on-brand/20 px-2.5 py-1 text-xs font-bold">
                   {t("save")} {Math.round(b.discount * 100)}%
                 </span>
                 <h3 className="mt-4 text-lg font-extrabold">{b.title}</h3>

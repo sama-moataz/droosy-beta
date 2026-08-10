@@ -86,7 +86,7 @@ function Schedule() {
                         >
                           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                             <span
-                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br text-[11px] font-bold text-primary-foreground ${t.accent}`}
+                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br text-[11px] font-bold text-on-brand ${t.accent}`}
                             >
                               {initials(t.name)}
                             </span>

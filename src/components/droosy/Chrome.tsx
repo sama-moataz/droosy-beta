@@ -10,7 +10,8 @@ import {
   Sun,
   Languages,
   GraduationCap,
-, ShieldCheck} from "lucide-react";
+  ShieldCheck,
+} from "lucide-react";
 import { initials, GOVERNORATES } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { useI18n } from "@/lib/i18n";

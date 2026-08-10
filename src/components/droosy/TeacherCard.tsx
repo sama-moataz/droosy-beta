@@ -32,7 +32,7 @@ export function TeacherCard({ teacher }: { teacher: Teacher }) {
       <div className="flex flex-1 flex-col gap-4 p-5">
         <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
           <div
-            className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${teacher.accent} text-lg font-bold text-white`}
+            className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${teacher.accent} text-lg font-bold text-on-brand`}
           >
             {initials(teacher.name)}
           </div>

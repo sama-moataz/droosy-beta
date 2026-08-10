@@ -90,7 +90,7 @@ function TeacherProfile() {
               <div className="-mt-10 px-6 pb-6">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
                   <div
-                    className={`grid h-20 w-20 shrink-0 place-items-center rounded-3xl border-4 border-card bg-gradient-to-br ${teacher.accent} text-2xl font-extrabold text-primary-foreground`}
+                    className={`grid h-20 w-20 shrink-0 place-items-center rounded-3xl border-4 border-card bg-gradient-to-br ${teacher.accent} text-2xl font-extrabold text-on-brand`}
                   >
                     {initials(teacher.name)}
                   </div>
@@ -326,7 +326,7 @@ function TeacherProfile() {
                             onClick={() => setSlot({ day: d.day, time })}
                             className={`rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors ${
                               active
-                                ? "gradient-brand text-primary-foreground"
+                                ? "gradient-brand text-on-brand"
                                 : "bg-muted text-muted-foreground hover:text-foreground"
                             }`}
                           >

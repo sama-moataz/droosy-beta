@@ -47,7 +47,7 @@ function IconButton({
 }
 
 export function Header() {
-  const { location, setLocation, cart, bookings, user, profile, signOut } =
+  const { location, setLocation, cart, bookings, user, profile, isAdmin, signOut } =
     useDroosy();
   const { t, lang, toggleLang, theme, toggleTheme } = useI18n();
   const navigate = useNavigate();

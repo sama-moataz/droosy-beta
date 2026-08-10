@@ -5,7 +5,15 @@ import { initials } from "@/lib/droosy-data";
 import { useDroosy } from "@/lib/droosy-store";
 import { Button } from "@/components/ui/button";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu"];
+const DAYS = [
+  "Saturday",
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+];
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({

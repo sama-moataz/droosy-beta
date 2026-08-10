@@ -62,10 +62,10 @@ function Schedule() {
             </Button>
           </div>
         ) : (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
             {DAYS.map((day) => {
               const items = bookings
-                .filter((b) => b.day === day)
+                .filter((b) => b.day.slice(0, 3).toLowerCase() === day.slice(0, 3).toLowerCase())
                 .sort((a, b) => a.time.localeCompare(b.time));
               return (
                 <section key={day} className="rounded-3xl bg-muted/50 p-4">

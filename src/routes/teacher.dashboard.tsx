@@ -57,7 +57,19 @@ import {
   getMyTeacherProfile,
   updateTeacherProfile,
   updateTeacherSlots,
+  deleteTeacherListing,
 } from "@/lib/teacher.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/teacher/dashboard")({
   validateSearch: (search: Record<string, unknown>) => {

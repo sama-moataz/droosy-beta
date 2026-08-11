@@ -204,7 +204,7 @@ function TeacherDashboard() {
     }[]
   >([]);
   const [teacherRating, setTeacherRating] = useState<number | null>(null);
-  const [teacherStudents, setTeacherStudents] = useState<number | null>(null);
+  const [teacherPrice, setTeacherPrice] = useState<number>(0);
 
   const [appStatus, setAppStatus] = useState<string | null>(null);
 
@@ -218,7 +218,7 @@ function TeacherDashboard() {
         setTeacherBookings(res.bookings);
         setTeacherReviews(res.reviews);
         setTeacherRating(res.rating);
-        setTeacherStudents(res.students);
+        setTeacherPrice(res.pricePerSession);
       })
       .catch(console.error);
     return () => {

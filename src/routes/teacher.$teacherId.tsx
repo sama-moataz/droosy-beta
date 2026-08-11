@@ -166,9 +166,9 @@ function TeacherProfile() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {teacher.manasa && (
+                  {(teacher.manasa || teacher.platformUrl) && (
                     <Button asChild variant="outline" size="sm">
-                      <a href={teacher.manasa} target="_blank" rel="noreferrer">
+                      <a href={teacher.manasa || teacher.platformUrl} target="_blank" rel="noreferrer">
                         <MonitorPlay size={15} /> {t("tp_open_manasa")}
                         <ExternalLink size={13} className="ms-1 rtl-flip" />
                       </a>

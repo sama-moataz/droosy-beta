@@ -126,11 +126,27 @@ function TeacherDashboard() {
   const getProfile = useServerFn(getMyTeacherProfile);
   const updateProfile = useServerFn(updateTeacherProfile);
   const updateSlots = useServerFn(updateTeacherSlots);
+  const deleteListingFn = useServerFn(deleteTeacherListing);
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<"profile" | "availability">("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteListing = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deleteListingFn({ data: { id } });
+      toast.success(t("td_toast_deleted"));
+      // Full reload so the store re-reads teacher ownership for the nav.
+      window.location.assign(searchTeacherId ? "/admin" : "/");
+    } catch (err) {
+      toast.error((err as Error).message);
+      setDeleting(false);
+    }
+  };
 
   // Profile state
   const [id, setId] = useState("");

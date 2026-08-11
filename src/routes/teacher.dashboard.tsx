@@ -185,7 +185,13 @@ function TeacherDashboard() {
 
   // Teacher analytics — fetched via server function (bypasses RLS)
   const [teacherBookings, setTeacherBookings] = useState<
-    { id: string; user_id: string; day: string | null; time: string | null }[]
+    {
+      id: string;
+      user_id: string;
+      day: string | null;
+      time: string | null;
+      student_name: string;
+    }[]
   >([]);
   const [teacherReviews, setTeacherReviews] = useState<
     {
@@ -533,7 +539,10 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(teacherStudents ?? teacherBookings.length).toLocaleString()}
+                  {Math.max(
+                    new Set(teacherBookings.map((b) => b.user_id).filter(Boolean)).size,
+                    teacherStudents || 0,
+                  ).toLocaleString()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
               </div>
@@ -615,7 +624,10 @@ function TeacherDashboard() {
                             {String(b.day ?? "")} at {String(b.time ?? "")}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {subject || "Private Session"} · {centerName || "Center / Online"}
+                            <span className="font-semibold text-foreground/80">
+                              {b.student_name || "Enrolled Student"}
+                            </span>{" "}
+                            · {subject || "Private Session"} · {centerName || "Center / Online"}
                           </p>
                         </div>
                       </div>

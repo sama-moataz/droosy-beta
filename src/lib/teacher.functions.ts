@@ -3,12 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 
-export const getMyTeacherProfile = createServerFn({ method: "GET" })
+export const getMyTeacherProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { teacherId?: string } | void) => d || {})
+  .inputValidator((input: unknown) =>
+    z.object({ teacherId: z.string().optional() }).parse(input || {}),
+  )
   .handler(async ({ data, context }) => {
     const targetOwnerId = context.userId;
-    const targetTeacherId = data.teacherId;
+    const targetTeacherId = data?.teacherId;
 
     if (targetTeacherId) {
       // Check if admin
@@ -185,15 +187,23 @@ export const deleteTeacherListing = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const getTeacherAnalytics = createServerFn({ method: "GET" })
+export const getTeacherAnalytics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { teacherId?: string } | void) => d || {})
+  .inputValidator((input: unknown) =>
+    z.object({ teacherId: z.string().optional() }).parse(input || {}),
+  )
   .handler(
     async ({
       data,
       context,
     }): Promise<{
-      bookings: { id: string; user_id: string; day: string | null; time: string | null }[];
+      bookings: {
+        id: string;
+        user_id: string;
+        day: string | null;
+        time: string | null;
+        student_name: string;
+      }[];
       reviews: {
         id: string;
         student_name: string;
@@ -205,7 +215,7 @@ export const getTeacherAnalytics = createServerFn({ method: "GET" })
       rating: number | null;
       students: number | null;
     }> => {
-      let teacherId = data.teacherId;
+      let teacherId = data?.teacherId;
       if (!teacherId) {
         const { data: owned } = await context.supabase
           .from("teachers")
@@ -252,8 +262,25 @@ export const getTeacherAnalytics = createServerFn({ method: "GET" })
         ],
       );
 
+      const userIds = Array.from(new Set((bookingRows ?? []).map((b) => b.user_id).filter(Boolean)));
+      let studentNamesMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profs } = await context.supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", userIds);
+        if (profs) {
+          studentNamesMap = Object.fromEntries(profs.map((p) => [p.id, p.full_name]));
+        }
+      }
+
+      const enrichedBookings = (bookingRows ?? []).map((b) => ({
+        ...b,
+        student_name: studentNamesMap[b.user_id] || "Enrolled Student",
+      }));
+
       return {
-        bookings: bookingRows ?? [],
+        bookings: enrichedBookings,
         reviews: reviewRows ?? [],
         rating: teacherRow?.rating ?? null,
         students: teacherRow?.students ?? null,

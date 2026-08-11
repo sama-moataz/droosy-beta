@@ -71,9 +71,24 @@ function Schedule() {
           .select("id, user_id, day, time")
           .eq("teacher_id", tData.id);
 
+        let studentNamesMap: Record<string, string> = {};
+        const uIds = Array.from(new Set((bData ?? []).map((b) => b.user_id).filter(Boolean)));
+        if (uIds.length > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", uIds);
+          if (profs) studentNamesMap = Object.fromEntries(profs.map((p) => [p.id, p.full_name]));
+        }
+
         if (!cancelled) {
           setTeacherBookings(
-            (bData as { id: string; user_id: string; day: string; time: string }[]) ?? [],
+            ((bData ?? []) as { id: string; user_id: string; day: string; time: string }[]).map(
+              (b) => ({
+                ...b,
+                student_name: studentNamesMap[b.user_id] || "Enrolled Student",
+              }),
+            ),
           );
         }
       }
@@ -149,6 +164,7 @@ function Schedule() {
                     type: "booked" as const,
                     time: b.time,
                     id: b.id,
+                    studentName: (b as { student_name?: string }).student_name,
                   })),
                   ...openTimes
                     .filter((tStr) => !dayBookings.some((b) => b.time === tStr))
@@ -156,6 +172,7 @@ function Schedule() {
                       type: "open" as const,
                       time: tStr,
                       id: `open-${tStr}`,
+                      studentName: undefined,
                     })),
                 ].sort((a, b) => {
                   const parseTime = (tStr: string) => {
@@ -202,6 +219,11 @@ function Schedule() {
                             <Clock size={12} className="text-primary" /> {item.time}
                           </p>
                           <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {item.studentName ? (
+                              <span className="font-semibold text-foreground/80">
+                                {item.studentName} ·{" "}
+                              </span>
+                            ) : null}
                             {teacherProfile?.subject || "Subject"} ·{" "}
                             {teacherProfile?.center_name || "Center/Online"}
                           </p>

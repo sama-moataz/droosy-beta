@@ -1,6 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+
+type TeacherUpdate = Database["public"]["Tables"]["teachers"]["Update"];
+
+// Resolves an authenticated user's id from their email using the GoTrue admin API
+// (service-role only -- never exposed to the client). profiles has no email column,
+// so this is the only correct way to go from email -> auth user id.
+async function resolveOwnerIdByEmail(email: string): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const target = email.trim().toLowerCase();
+  const perPage = 1000;
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(`Failed to look up user by email: ${error.message}`);
+    const match = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (match) return match.id;
+    if (data.users.length < perPage) break; // last page reached
+  }
+  return null;
+}
 
 export type AdminApplication = {
   id: string;
@@ -217,13 +237,11 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
 
     let ownerId: string | null = null;
     if (data.ownerEmail) {
-      const { data: match } = await context.supabase
-        .from("profiles")
-        .select("id")
-        .eq("full_name", data.ownerEmail)
-        .maybeSingle();
-      if (match) {
-        ownerId = match.id;
+      ownerId = await resolveOwnerIdByEmail(data.ownerEmail);
+      if (!ownerId) {
+        throw new Error(
+          `No registered user found with email "${data.ownerEmail}". The teacher will be created without a linked account; leave the email blank or double-check it.`,
+        );
       }
     }
 
@@ -313,37 +331,47 @@ export const adminUpdateTeacher = createServerFn({ method: "POST" })
     });
     if (admin !== true) throw new Error("Forbidden: Admin access required");
 
-    let ownerId: string | null = null;
+    // Preserve the existing owner_id unless an explicit ownerEmail is supplied.
+    // Never silently null out an existing ownership relationship just because
+    // the admin left the email field blank on an edit.
+    let ownerId: string | null | undefined = undefined;
     if (data.ownerEmail) {
-      const { data: match } = await context.supabase
-        .from("profiles")
-        .select("id")
-        .eq("full_name", data.ownerEmail)
-        .maybeSingle();
-      if (match) ownerId = match.id;
+      const resolved = await resolveOwnerIdByEmail(data.ownerEmail);
+      if (!resolved) {
+        throw new Error(
+          `No registered user found with email "${data.ownerEmail}". Leave the email blank to keep the current owner, or double-check it.`,
+        );
+      }
+      ownerId = resolved;
+    }
+
+    const updatePayload: TeacherUpdate = {
+      name: data.fullName,
+      name_ar: data.fullNameAr || "",
+      subject: data.subject,
+      area: data.area,
+      region: data.governorate,
+      center_name: data.centerName || "",
+      center_address: data.centerAddress || "",
+      map_query: [data.centerName, data.area, data.governorate, "Egypt"]
+        .filter(Boolean)
+        .join(", "),
+      modes: data.modes,
+      curricula: data.curricula,
+      grades: data.grades,
+      price_per_session: data.pricePerSession,
+      bio: data.bio || "",
+      platform_url: data.platformUrl || null,
+    };
+
+    // Only touch owner_id when an email was explicitly provided and resolved.
+    if (ownerId !== undefined) {
+      updatePayload.owner_id = ownerId;
     }
 
     const { error: upErr } = await context.supabase
       .from("teachers")
-      .update({
-        owner_id: ownerId,
-        name: data.fullName,
-        name_ar: data.fullNameAr || "",
-        subject: data.subject,
-        area: data.area,
-        region: data.governorate,
-        center_name: data.centerName || "",
-        center_address: data.centerAddress || "",
-        map_query: [data.centerName, data.area, data.governorate, "Egypt"]
-          .filter(Boolean)
-          .join(", "),
-        modes: data.modes,
-        curricula: data.curricula,
-        grades: data.grades,
-        price_per_session: data.pricePerSession,
-        bio: data.bio || "",
-        platform_url: data.platformUrl || null,
-      })
+      .update(updatePayload)
       .eq("id", data.id);
 
     if (upErr) throw upErr;

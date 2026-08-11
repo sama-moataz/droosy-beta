@@ -353,9 +353,7 @@ export const adminUpdateTeacher = createServerFn({ method: "POST" })
       region: data.governorate,
       center_name: data.centerName || "",
       center_address: data.centerAddress || "",
-      map_query: [data.centerName, data.area, data.governorate, "Egypt"]
-        .filter(Boolean)
-        .join(", "),
+      map_query: [data.centerName, data.area, data.governorate, "Egypt"].filter(Boolean).join(", "),
       modes: data.modes,
       curricula: data.curricula,
       grades: data.grades,

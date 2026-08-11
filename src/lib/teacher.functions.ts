@@ -21,7 +21,8 @@ export const getMyTeacherProfile = createServerFn({ method: "POST" })
       if (admin !== true) throw new Error("Forbidden");
     }
 
-    let query = context.supabase.from("teachers").select("*");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let query = supabaseAdmin.from("teachers").select("*");
 
     if (targetTeacherId) {
       query = query.eq("id", targetTeacherId);
@@ -29,7 +30,7 @@ export const getMyTeacherProfile = createServerFn({ method: "POST" })
       query = query.eq("owner_id", targetOwnerId);
     }
 
-    const { data: teacher, error } = await query.single();
+    const { data: teacher, error } = await query.maybeSingle();
 
     if (error || !teacher) return null;
     return teacher;
@@ -215,9 +216,11 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
       rating: number | null;
       students: number | null;
     }> => {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
       let teacherId = data?.teacherId;
       if (!teacherId) {
-        const { data: owned } = await context.supabase
+        const { data: owned } = await supabaseAdmin
           .from("teachers")
           .select("id")
           .eq("owner_id", context.userId)
@@ -233,28 +236,28 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         _role: "admin",
       });
       if (admin !== true) {
-        const { data: teacher, error: ownerErr } = await context.supabase
+        const { data: teacher, error: ownerErr } = await supabaseAdmin
           .from("teachers")
           .select("owner_id")
           .eq("id", teacherId)
           .single();
         if (ownerErr || !teacher || teacher.owner_id !== context.userId) {
-          throw new Error("Forbidden");
+          throw new Error("Forbidden: You can only view analytics for your own teacher profile");
         }
       }
 
       const [{ data: bookingRows }, { data: reviewRows }, { data: teacherRow }] = await Promise.all(
         [
-          context.supabase
+          supabaseAdmin
             .from("bookings")
             .select("id, user_id, day, time")
             .eq("teacher_id", teacherId),
-          context.supabase
+          supabaseAdmin
             .from("reviews")
             .select("id, student_name, rating, body, created_at, verified")
             .eq("teacher_id", teacherId)
             .order("created_at", { ascending: false }),
-          context.supabase
+          supabaseAdmin
             .from("teachers")
             .select("rating, students")
             .eq("id", teacherId)
@@ -262,10 +265,12 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         ],
       );
 
-      const userIds = Array.from(new Set((bookingRows ?? []).map((b) => b.user_id).filter(Boolean)));
+      const userIds = Array.from(
+        new Set((bookingRows ?? []).map((b) => b.user_id).filter(Boolean)),
+      );
       let studentNamesMap: Record<string, string> = {};
       if (userIds.length > 0) {
-        const { data: profs } = await context.supabase
+        const { data: profs } = await supabaseAdmin
           .from("profiles")
           .select("id, full_name")
           .in("id", userIds);

@@ -202,9 +202,7 @@ function TeacherDashboard() {
         "Friday",
       ];
       const mergedSlots = ALL_DAYS.map((dayName) => {
-        const found = savedSlots.find(
-          (s) => s.day.toLowerCase() === dayName.toLowerCase(),
-        );
+        const found = savedSlots.find((s) => s.day.toLowerCase() === dayName.toLowerCase());
         return {
           day: dayName,
           times: found ? found.times : [],

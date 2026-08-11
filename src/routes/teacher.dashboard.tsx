@@ -539,12 +539,12 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {Math.max(
-                    new Set(teacherBookings.map((b) => b.user_id).filter(Boolean)).size,
-                    teacherStudents || 0,
-                  ).toLocaleString()}
+                  {new Set(
+                    teacherBookings.map((b) => b.user_id).filter(Boolean),
+                  ).size.toLocaleString()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
+
               </div>
 
               <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">

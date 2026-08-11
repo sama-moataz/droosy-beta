@@ -122,13 +122,11 @@ export function Header() {
           {authReady && !isAdmin && (!user || profile?.role === "teacher" || teacherId) && (
             <Link
               to={user && teacherId ? "/teacher/dashboard" : "/teach"}
-              className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
               activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
             >
               <GraduationCap size={16} />
-              <span className="hidden lg:inline">
-                {user && teacherId ? t("nav_teacher_dashboard") : t("nav_teach")}
-              </span>
+              <span className="hidden lg:inline">{t("nav_teach")}</span>
             </Link>
           )}
           <Link

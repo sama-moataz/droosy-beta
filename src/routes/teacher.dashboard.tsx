@@ -12,6 +12,7 @@ import {
   Trash2,
   ExternalLink,
   Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
@@ -170,12 +171,22 @@ function TeacherDashboard() {
   // Slots state
   const [slots, setSlots] = useState<{ day: string; times: string[] }[]>([]);
 
+  const [appStatus, setAppStatus] = useState<string | null>(null);
+
   const loadProfile = useCallback(async () => {
     try {
       const data = await getProfile(
         searchTeacherId ? { data: { teacherId: searchTeacherId } } : undefined,
       );
       if (!data) {
+        if (user) {
+          const { data: appData } = await supabase
+            .from("teacher_applications")
+            .select("status")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (appData) setAppStatus(appData.status);
+        }
         setLoading(false);
         return;
       }
@@ -218,7 +229,7 @@ function TeacherDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [getProfile, searchTeacherId, t]);
+  }, [getProfile, searchTeacherId, t, user]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -351,10 +362,35 @@ function TeacherDashboard() {
         <Header />
         <main className="mx-auto max-w-5xl px-4 py-12">
           <h1 className="text-3xl font-extrabold text-foreground">{t("td_dashboard_title")}</h1>
-          <p className="mt-4 text-muted-foreground">{t("td_no_profile_title")}</p>
-          <Button asChild className="mt-6">
-            <Link to="/teach">{t("td_apply_btn")}</Link>
-          </Button>
+          {appStatus === "pending" ? (
+            <div className="mt-6 rounded-3xl border border-primary/30 bg-brand-soft p-8">
+              <div className="flex items-center gap-2 text-base font-bold text-primary">
+                <CheckCircle2 size={20} />
+                <span>{t("application_pending")}</span>
+              </div>
+              <p className="mt-2 text-sm text-secondary-foreground/80">
+                Your application is currently under review by our admin team. Once approved, your
+                teacher dashboard and timetable manager will be fully activated here.
+              </p>
+              <Button asChild size="sm" className="mt-5">
+                <Link to="/teach">{t("sch_view_profile")}</Link>
+              </Button>
+            </div>
+          ) : appStatus === "rejected" ? (
+            <div className="mt-6 rounded-3xl border border-border bg-card p-8">
+              <p className="font-bold text-foreground">{t("application_rejected")}</p>
+              <Button asChild size="sm" className="mt-5">
+                <Link to="/teach">{t("resubmit_application")}</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="mt-4 text-muted-foreground">{t("td_no_profile_title")}</p>
+              <Button asChild className="mt-6">
+                <Link to="/teach">{t("td_apply_btn")}</Link>
+              </Button>
+            </>
+          )}
         </main>
       </div>
     );

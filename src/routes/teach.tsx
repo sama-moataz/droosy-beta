@@ -125,11 +125,10 @@ function TeachPage() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  const isTeacher = Boolean(teacherId || profile?.role === "teacher");
+  const hasLiveTeacher = Boolean(teacherId);
 
   useEffect(() => {
-    if (!user || isTeacher) {
-      // No signed-in user, or already a teacher — application status is not relevant
+    if (!user || hasLiveTeacher) {
       setStatus(null);
       return;
     }
@@ -146,7 +145,7 @@ function TeachPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, isTeacher]);
+  }, [user, hasLiveTeacher]);
 
   const toggle = <T extends string>(value: T, list: T[], set: (v: T[]) => void) =>
     set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -272,7 +271,7 @@ function TeachPage() {
           </div>
         )}
 
-        {user && isTeacher && (
+        {user && hasLiveTeacher && (
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm">
             <GraduationCap size={18} className="mt-0.5 shrink-0 text-primary" />
             <div>
@@ -280,32 +279,36 @@ function TeachPage() {
                 {t("already_teacher_title")}
               </p>
               <p className="mt-1 text-secondary-foreground/80">{t("already_teacher_body")}</p>
-              <Button asChild size="sm" className="mt-3">
-                <Link
-                  to={teacherId ? "/teacher/$teacherId" : "/teacher/dashboard"}
-                  params={teacherId ? { teacherId } : undefined}
-                >
-                  {t("nav_teacher_dashboard")}
-                </Link>
-              </Button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link to="/teacher/dashboard">{t("nav_teacher_dashboard")}</Link>
+                </Button>
+                {teacherId && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/teacher/$teacherId" params={{ teacherId }}>
+                      {t("sch_view_profile")}
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {user && !isTeacher && status === "pending" && (
+        {user && !hasLiveTeacher && status === "pending" && (
           <div className="mt-6 flex items-center gap-2 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm font-semibold text-secondary-foreground">
             <CheckCircle2 size={18} className="text-primary" />
             {t("application_pending")}
           </div>
         )}
 
-        {user && !isTeacher && status === "rejected" && (
+        {user && !hasLiveTeacher && status === "rejected" && (
           <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
             {t("application_rejected")}
           </div>
         )}
 
-        {user && !isTeacher && status !== "pending" && (
+        {user && !hasLiveTeacher && status !== "pending" && (
           <form onSubmit={submit} className="mt-8 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">

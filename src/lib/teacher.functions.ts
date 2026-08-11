@@ -184,3 +184,79 @@ export const deleteTeacherListing = createServerFn({ method: "POST" })
     if (delErr) throw delErr;
     return { ok: true };
   });
+
+export const getTeacherAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: { teacherId?: string } | void) => d || {})
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      bookings: { id: string; user_id: string; day: string | null; time: string | null }[];
+      reviews: {
+        id: string;
+        student_name: string;
+        rating: number;
+        body: string;
+        created_at: string;
+        verified: boolean;
+      }[];
+      rating: number | null;
+      students: number | null;
+    }> => {
+      let teacherId = data.teacherId;
+      if (!teacherId) {
+        const { data: owned } = await context.supabase
+          .from("teachers")
+          .select("id")
+          .eq("owner_id", context.userId)
+          .maybeSingle();
+        if (owned) teacherId = owned.id;
+      }
+
+      if (!teacherId) return { bookings: [], reviews: [], rating: null, students: null };
+
+      // Verify caller is admin OR owns this teacher record
+      const { data: admin } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+      if (admin !== true) {
+        const { data: teacher, error: ownerErr } = await context.supabase
+          .from("teachers")
+          .select("owner_id")
+          .eq("id", teacherId)
+          .single();
+        if (ownerErr || !teacher || teacher.owner_id !== context.userId) {
+          throw new Error("Forbidden");
+        }
+      }
+
+      const [{ data: bookingRows }, { data: reviewRows }, { data: teacherRow }] = await Promise.all(
+        [
+          context.supabase
+            .from("bookings")
+            .select("id, user_id, day, time")
+            .eq("teacher_id", teacherId),
+          context.supabase
+            .from("reviews")
+            .select("id, student_name, rating, body, created_at, verified")
+            .eq("teacher_id", teacherId)
+            .order("created_at", { ascending: false }),
+          context.supabase
+            .from("teachers")
+            .select("rating, students")
+            .eq("id", teacherId)
+            .maybeSingle(),
+        ],
+      );
+
+      return {
+        bookings: bookingRows ?? [],
+        reviews: reviewRows ?? [],
+        rating: teacherRow?.rating ?? null,
+        students: teacherRow?.students ?? null,
+      };
+    },
+  );

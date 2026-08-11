@@ -78,6 +78,10 @@ function TeacherProfile() {
 
   const list = reviews.filter((r) => r.teacherId === teacher.id);
   const inCart = cart.includes(teacher.id);
+  const effectiveRating =
+    list.length > 0
+      ? list.reduce((acc, r) => acc + r.rating, 0) / list.length
+      : teacher.rating || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,8 +117,8 @@ function TeacherProfile() {
 
                 <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
                   <span className="flex items-center gap-2">
-                    <Stars value={teacher.rating} />
-                    <strong>{teacher.rating.toFixed(1)}</strong>
+                    <Stars value={effectiveRating} />
+                    <strong>{effectiveRating.toFixed(1)}</strong>
                     <span className="text-muted-foreground">
                       {t("tp_reviews_count", { n: list.length })}
                     </span>

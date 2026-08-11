@@ -145,8 +145,11 @@ export const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export function relativeDate(iso: string, lang: "en" | "ar" = "en"): string {
-  const diff = Date.now() - new Date(iso).getTime();
+export function relativeDate(iso: string | null | undefined, lang: "en" | "ar" = "en"): string {
+  if (!iso) return "";
+  const ts = new Date(iso).getTime();
+  if (isNaN(ts)) return "";
+  const diff = Date.now() - ts;
   const days = Math.floor(diff / 86_400_000);
   if (days < 1) return lang === "ar" ? "الآن" : "Just now";
   if (days === 1) return lang === "ar" ? "أمس" : "Yesterday";

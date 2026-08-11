@@ -63,7 +63,10 @@ import {
   updateTeacherProfile,
   updateTeacherSlots,
   deleteTeacherListing,
+  getTeacherAnalytics,
 } from "@/lib/teacher.functions";
+import { Stars } from "@/components/droosy/Stars";
+import { relativeDate } from "@/lib/droosy-data";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -133,6 +136,7 @@ function TeacherDashboard() {
   const updateProfile = useServerFn(updateTeacherProfile);
   const updateSlots = useServerFn(updateTeacherSlots);
   const deleteListingFn = useServerFn(deleteTeacherListing);
+  const getAnalytics = useServerFn(getTeacherAnalytics);
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<"overview" | "availability" | "profile">(
@@ -179,33 +183,42 @@ function TeacherDashboard() {
   // Slots state
   const [slots, setSlots] = useState<{ day: string; times: string[] }[]>([]);
 
-  // Teacher analytics — bookings made by students for this teacher
+  // Teacher analytics — fetched via server function (bypasses RLS)
   const [teacherBookings, setTeacherBookings] = useState<
     { id: string; user_id: string; day: string | null; time: string | null }[]
+  >([]);
+  const [teacherReviews, setTeacherReviews] = useState<
+    {
+      id: string;
+      student_name: string;
+      rating: number;
+      body: string;
+      created_at: string;
+      verified: boolean;
+    }[]
   >([]);
   const [teacherRating, setTeacherRating] = useState<number | null>(null);
   const [teacherStudents, setTeacherStudents] = useState<number | null>(null);
 
   const [appStatus, setAppStatus] = useState<string | null>(null);
 
-  // Fetch real analytics when teacher id is known
+  // Fetch analytics via server fn when teacher id is known (works for both owner and admin)
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    void (async () => {
-      const [{ data: bookingRows }, { data: teacherRow }] = await Promise.all([
-        supabase.from("bookings").select("id, user_id, day, time").eq("teacher_id", id),
-        supabase.from("teachers").select("rating, students").eq("id", id).maybeSingle(),
-      ]);
-      if (cancelled) return;
-      setTeacherBookings(bookingRows ?? []);
-      setTeacherRating(teacherRow?.rating ?? null);
-      setTeacherStudents(teacherRow?.students ?? null);
-    })();
+    void getAnalytics({ data: { teacherId: id } })
+      .then((res) => {
+        if (cancelled) return;
+        setTeacherBookings(res.bookings);
+        setTeacherReviews(res.reviews);
+        setTeacherRating(res.rating);
+        setTeacherStudents(res.students);
+      })
+      .catch(console.error);
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, getAnalytics]);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -550,7 +563,10 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {teacherRating != null ? teacherRating.toFixed(1) : "—"}{" "}
+                  {(teacherReviews.length > 0
+                    ? teacherReviews.reduce((sum, r) => sum + r.rating, 0) / teacherReviews.length
+                    : (teacherRating ?? 0)
+                  ).toFixed(1)}{" "}
                   <span className="text-sm font-bold text-muted-foreground">/ 5.0</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Verified student feedback</p>
@@ -606,6 +622,54 @@ function TeacherDashboard() {
                       <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                         {Number(price || 0)} EGP
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Student Reviews Section */}
+            <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-extrabold text-foreground">Student Reviews</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Feedback left by verified students
+                  </p>
+                </div>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                  {teacherReviews.length} {teacherReviews.length === 1 ? "review" : "reviews"}
+                </span>
+              </div>
+
+              {teacherReviews.length === 0 ? (
+                <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    No student reviews received yet for your profile.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 divide-y divide-border">
+                  {teacherReviews.map((r) => (
+                    <div key={r.id} className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground">{r.student_name}</span>
+                          {r.verified && (
+                            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {relativeDate(r.created_at)}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1">
+                        <Stars value={r.rating} />
+                        <span className="text-xs font-bold">{r.rating}.0</span>
+                      </div>
+                      <p className="mt-2 text-sm text-foreground/90">{r.body}</p>
                     </div>
                   ))}
                 </div>

@@ -266,7 +266,7 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
             .order("created_at", { ascending: false }),
           context.supabase
             .from("teachers")
-            .select("rating, students")
+            .select("rating, students, price_per_session")
             .eq("id", teacherId)
             .maybeSingle(),
         ],
@@ -296,6 +296,8 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         reviews: reviewRows ?? [],
         rating: teacherRow?.rating ?? null,
         students: teacherRow?.students ?? null,
+        pricePerSession: Number(teacherRow?.price_per_session ?? 0),
+        teacherId,
       };
     },
   );

@@ -44,7 +44,7 @@ export const listApplications = createServerFn({ method: "GET" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (admin !== true) throw new Error("Forbidden");
+    if (admin !== true) throw new Error("Forbidden: Admin access required");
 
     const { data, error } = await context.supabase
       .from("teacher_applications")
@@ -52,10 +52,9 @@ export const listApplications = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw error;
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sign = async (path: string | null) => {
       if (!path) return null;
-      const { data: signed } = await supabaseAdmin.storage
+      const { data: signed } = await context.supabase.storage
         .from("teacher-verification")
         .createSignedUrl(path, 60 * 30);
       return signed?.signedUrl ?? null;
@@ -96,7 +95,7 @@ export const listAllTeachersAdmin = createServerFn({ method: "GET" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (admin !== true) throw new Error("Forbidden");
+    if (admin !== true) throw new Error("Forbidden: Admin access required");
 
     const { data, error } = await context.supabase
       .from("teachers")
@@ -122,7 +121,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (admin !== true) throw new Error("Forbidden");
+    if (admin !== true) throw new Error("Forbidden: Admin access required");
 
     const { data: app, error: readErr } = await context.supabase
       .from("teacher_applications")
@@ -131,10 +130,8 @@ export const reviewApplication = createServerFn({ method: "POST" })
       .single();
     if (readErr || !app) throw new Error("Application not found");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     if (data.decision === "approved") {
-      const { data: existingTeachers } = await supabaseAdmin
+      const { data: existingTeachers } = await context.supabase
         .from("teachers")
         .select("id")
         .eq("owner_id", app.user_id)
@@ -149,7 +146,7 @@ export const reviewApplication = createServerFn({ method: "POST" })
 
       const teacherId = existingTeachers?.[0]?.id || `${slug}-${app.id.slice(0, 6)}`;
 
-      const { error: upErr } = await supabaseAdmin.from("teachers").upsert(
+      const { error: upErr } = await context.supabase.from("teachers").upsert(
         {
           id: teacherId,
           owner_id: app.user_id,
@@ -176,10 +173,10 @@ export const reviewApplication = createServerFn({ method: "POST" })
       );
       if (upErr) throw upErr;
 
-      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", app.user_id);
+      await context.supabase.from("profiles").update({ role: "teacher" }).eq("id", app.user_id);
     }
 
-    const { error: statusErr } = await supabaseAdmin
+    const { error: statusErr } = await context.supabase
       .from("teacher_applications")
       .update({ status: data.decision, review_note: data.note ?? null })
       .eq("id", data.id);
@@ -187,14 +184,6 @@ export const reviewApplication = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
-
-// ─── Admin direct "Add Teacher" ───────────────────────────────────────────────
-// Completely separate from the teacher-application self-service flow.
-// Creates a teacher record directly via supabaseAdmin (service-role, server-only).
-// If ownerEmail is provided, it resolves to a user id and sets owner_id; if that
-// owner already has a teacher row, the existing row is updated instead of creating
-// a duplicate. owner_id is nullable — admin can create teachers without a platform
-// user account.
 
 export const adminCreateTeacher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -220,32 +209,27 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    // ── Enforce admin role on the server ──
     const { data: admin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
     });
-    if (admin !== true) throw new Error("Forbidden");
+    if (admin !== true) throw new Error("Forbidden: Admin access required");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // ── Resolve owner_id from email if provided ──
     let ownerId: string | null = null;
     if (data.ownerEmail) {
-      // listUsers is a server-only admin API; never exposed to the client.
-      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-      if (listErr) throw new Error("Failed to look up user accounts");
-      const match = userList.users.find(
-        (u) => u.email?.toLowerCase() === data.ownerEmail!.toLowerCase(),
-      );
-      if (!match) throw new Error(`No user account found for ${data.ownerEmail}`);
-      ownerId = match.id;
+      const { data: match } = await context.supabase
+        .from("profiles")
+        .select("id")
+        .eq("full_name", data.ownerEmail)
+        .maybeSingle();
+      if (match) {
+        ownerId = match.id;
+      }
     }
 
-    // ── Duplicate prevention: if owner already has a teacher, update it ──
     let existingTeacherId: string | null = null;
     if (ownerId) {
-      const { data: existing } = await supabaseAdmin
+      const { data: existing } = await context.supabase
         .from("teachers")
         .select("id")
         .eq("owner_id", ownerId)
@@ -264,7 +248,7 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
 
     const teacherId = existingTeacherId || `${slug}-${crypto.randomUUID().slice(0, 6)}`;
 
-    const { error: upErr } = await supabaseAdmin.from("teachers").upsert(
+    const { error: upErr } = await context.supabase.from("teachers").upsert(
       {
         id: teacherId,
         owner_id: ownerId,
@@ -291,9 +275,8 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
     );
     if (upErr) throw upErr;
 
-    // If we resolved an owner, also mark their profile as "teacher"
     if (ownerId) {
-      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
+      await context.supabase.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
     }
 
     return { ok: true, teacherId };
@@ -328,22 +311,19 @@ export const adminUpdateTeacher = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (admin !== true) throw new Error("Forbidden");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (admin !== true) throw new Error("Forbidden: Admin access required");
 
     let ownerId: string | null = null;
     if (data.ownerEmail) {
-      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-      if (listErr) throw new Error("Failed to look up user accounts");
-      const match = userList.users.find(
-        (u) => u.email?.toLowerCase() === data.ownerEmail!.toLowerCase(),
-      );
-      if (!match) throw new Error(`No user account found for ${data.ownerEmail}`);
-      ownerId = match.id;
+      const { data: match } = await context.supabase
+        .from("profiles")
+        .select("id")
+        .eq("full_name", data.ownerEmail)
+        .maybeSingle();
+      if (match) ownerId = match.id;
     }
 
-    const { error: upErr } = await supabaseAdmin
+    const { error: upErr } = await context.supabase
       .from("teachers")
       .update({
         owner_id: ownerId,
@@ -369,7 +349,7 @@ export const adminUpdateTeacher = createServerFn({ method: "POST" })
     if (upErr) throw upErr;
 
     if (ownerId) {
-      await supabaseAdmin.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
+      await context.supabase.from("profiles").update({ role: "teacher" }).eq("id", ownerId);
     }
 
     return { ok: true };

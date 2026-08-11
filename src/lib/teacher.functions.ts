@@ -214,6 +214,8 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
       }[];
       rating: number | null;
       students: number | null;
+      pricePerSession: number;
+      teacherId: string | null;
     }> => {
       let teacherId = data?.teacherId;
       if (!teacherId) {

@@ -218,30 +218,44 @@ function TeachPage() {
         upload(idFile, "national-id"),
         upload(credFile, "credential"),
       ]);
-      const { error } = await supabase.from("teacher_applications").upsert(
-        {
-          user_id: user.id,
-          full_name: parsed.data.fullName,
-          full_name_ar: parsed.data.fullNameAr,
-          phone: parsed.data.phone,
-          subject: parsed.data.subject,
-          governorate: parsed.data.governorate,
-          area: parsed.data.area,
-          center_name: centerName,
-          center_address: centerAddress,
-          platform_url: platformUrl || null,
-          price_per_session: parsed.data.pricePerSession,
-          bio: parsed.data.bio,
-          national_id_last4: parsed.data.nationalIdLast4,
-          modes,
-          curricula,
-          grades,
-          id_document_path: idPath,
-          credential_document_path: credPath,
-          status: "pending",
-        },
-        { onConflict: "user_id" },
-      );
+      const payload = {
+        user_id: user.id,
+        full_name: parsed.data.fullName,
+        full_name_ar: parsed.data.fullNameAr,
+        phone: parsed.data.phone,
+        subject: parsed.data.subject,
+        governorate: parsed.data.governorate,
+        area: parsed.data.area,
+        center_name: centerName,
+        center_address: centerAddress,
+        platform_url: platformUrl || null,
+        price_per_session: parsed.data.pricePerSession,
+        bio: parsed.data.bio,
+        national_id_last4: parsed.data.nationalIdLast4,
+        modes,
+        curricula,
+        grades,
+        id_document_path: idPath,
+        credential_document_path: credPath,
+        status: "pending",
+      };
+
+      const { data: existingApp } = await supabase
+        .from("teacher_applications")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      let error;
+      if (existingApp) {
+        ({ error } = await supabase
+          .from("teacher_applications")
+          .update(payload)
+          .eq("id", existingApp.id));
+      } else {
+        ({ error } = await supabase.from("teacher_applications").insert(payload));
+      }
+
       if (error) throw error;
       setStatus("pending");
       toast.success(t("application_sent"));

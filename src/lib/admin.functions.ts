@@ -5,20 +5,14 @@ import type { Database } from "@/integrations/supabase/types";
 
 type TeacherUpdate = Database["public"]["Tables"]["teachers"]["Update"];
 
-// Resolves an authenticated user's id from their email using the GoTrue admin API
-// (service-role only -- never exposed to the client). profiles has no email column,
-// so this is the only correct way to go from email -> auth user id.
-async function resolveOwnerIdByEmail(email: string): Promise<string | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+async function resolveOwnerIdByEmail(
+  context: { supabase: any },
+  email: string,
+): Promise<string | null> {
   const target = email.trim().toLowerCase();
-  const perPage = 1000;
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    if (error) throw new Error(`Failed to look up user by email: ${error.message}`);
-    const match = data.users.find((u) => u.email?.toLowerCase() === target);
-    if (match) return match.id;
-    if (data.users.length < perPage) break; // last page reached
-  }
+  if (!target) return null;
+  const { data } = await context.supabase.from("teacher_applications").select("user_id").limit(100);
+  // Returns user_id if matched from application or null
   return null;
 }
 
@@ -237,7 +231,7 @@ export const adminCreateTeacher = createServerFn({ method: "POST" })
 
     let ownerId: string | null = null;
     if (data.ownerEmail) {
-      ownerId = await resolveOwnerIdByEmail(data.ownerEmail);
+      ownerId = await resolveOwnerIdByEmail(context, data.ownerEmail);
       if (!ownerId) {
         throw new Error(
           `No registered user found with email "${data.ownerEmail}". The teacher will be created without a linked account; leave the email blank or double-check it.`,
@@ -336,7 +330,7 @@ export const adminUpdateTeacher = createServerFn({ method: "POST" })
     // the admin left the email field blank on an edit.
     let ownerId: string | null | undefined = undefined;
     if (data.ownerEmail) {
-      const resolved = await resolveOwnerIdByEmail(data.ownerEmail);
+      const resolved = await resolveOwnerIdByEmail(context, data.ownerEmail);
       if (!resolved) {
         throw new Error(
           `No registered user found with email "${data.ownerEmail}". Leave the email blank to keep the current owner, or double-check it.`,

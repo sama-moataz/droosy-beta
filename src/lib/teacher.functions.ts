@@ -21,8 +21,7 @@ export const getMyTeacherProfile = createServerFn({ method: "POST" })
       if (admin !== true) throw new Error("Forbidden");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let query = supabaseAdmin.from("teachers").select("*");
+    let query = context.supabase.from("teachers").select("*");
 
     if (targetTeacherId) {
       query = query.eq("id", targetTeacherId);
@@ -216,11 +215,9 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
       rating: number | null;
       students: number | null;
     }> => {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
       let teacherId = data?.teacherId;
       if (!teacherId) {
-        const { data: owned } = await supabaseAdmin
+        const { data: owned } = await context.supabase
           .from("teachers")
           .select("id")
           .eq("owner_id", context.userId)
@@ -236,7 +233,7 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         _role: "admin",
       });
       if (admin !== true) {
-        const { data: teacher, error: ownerErr } = await supabaseAdmin
+        const { data: teacher, error: ownerErr } = await context.supabase
           .from("teachers")
           .select("owner_id")
           .eq("id", teacherId)
@@ -248,16 +245,16 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
 
       const [{ data: bookingRows }, { data: reviewRows }, { data: teacherRow }] = await Promise.all(
         [
-          supabaseAdmin
+          context.supabase
             .from("bookings")
             .select("id, user_id, day, time")
             .eq("teacher_id", teacherId),
-          supabaseAdmin
+          context.supabase
             .from("reviews")
             .select("id, student_name, rating, body, created_at, verified")
             .eq("teacher_id", teacherId)
             .order("created_at", { ascending: false }),
-          supabaseAdmin
+          context.supabase
             .from("teachers")
             .select("rating, students")
             .eq("id", teacherId)
@@ -270,7 +267,7 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
       );
       let studentNamesMap: Record<string, string> = {};
       if (userIds.length > 0) {
-        const { data: profs } = await supabaseAdmin
+        const { data: profs } = await context.supabase
           .from("profiles")
           .select("id, full_name")
           .in("id", userIds);

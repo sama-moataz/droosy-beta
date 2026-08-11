@@ -12,7 +12,20 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deleteTeacherListing } from "@/lib/teacher.functions";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
 import { useI18n } from "@/lib/i18n";
@@ -385,6 +398,7 @@ function AdminPage() {
   const fetchApps = useServerFn(listApplications);
   const fetchTeachers = useServerFn(listAllTeachersAdmin);
   const review = useServerFn(reviewApplication);
+  const deleteTeacher = useServerFn(deleteTeacherListing);
 
   const [apps, setApps] = useState<AdminApplication[] | null>(null);
   const [teachers, setTeachers] = useState<
@@ -414,6 +428,19 @@ function AdminPage() {
     if (!authReady || !user) return;
     void load();
   }, [authReady, user, load]);
+
+  const removeTeacher = async (teacherRowId: string) => {
+    setBusy(`del-${teacherRowId}`);
+    try {
+      await deleteTeacher({ data: { id: teacherRowId } });
+      toast.success(t("td_toast_deleted"));
+      await load();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const decide = async (id: string, decision: "approved" | "rejected") => {
     setBusy(id);
@@ -511,11 +538,47 @@ function AdminPage() {
                           {L(governorateLabel(tRow.region))}
                         </p>
                       </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
-                          {t("admin_edit_teacher_btn")}
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
+                            {t("admin_edit_teacher_btn")}
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={busy === `del-${tRow.id}`}
+                            >
+                              {busy === `del-${tRow.id}` ? (
+                                <Loader2 size={14} className="animate-spin me-2" />
+                              ) : (
+                                <Trash2 size={14} className="me-2" />
+                              )}
+                              {t("td_delete_listing")}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("td_delete_confirm_title")}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("td_delete_confirm_body")}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("td_delete_cancel")}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  void removeTeacher(tRow.id);
+                                }}
+                              >
+                                {t("td_delete_confirm_btn")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   ))}
                 </div>

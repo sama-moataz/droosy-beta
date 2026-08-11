@@ -57,7 +57,19 @@ import {
   getMyTeacherProfile,
   updateTeacherProfile,
   updateTeacherSlots,
+  deleteTeacherListing,
 } from "@/lib/teacher.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/teacher/dashboard")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -114,11 +126,27 @@ function TeacherDashboard() {
   const getProfile = useServerFn(getMyTeacherProfile);
   const updateProfile = useServerFn(updateTeacherProfile);
   const updateSlots = useServerFn(updateTeacherSlots);
+  const deleteListingFn = useServerFn(deleteTeacherListing);
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<"profile" | "availability">("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteListing = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deleteListingFn({ data: { id } });
+      toast.success(t("td_toast_deleted"));
+      // Full reload so the store re-reads teacher ownership for the nav.
+      window.location.assign(searchTeacherId ? "/admin" : "/");
+    } catch (err) {
+      toast.error((err as Error).message);
+      setDeleting(false);
+    }
+  };
 
   // Profile state
   const [id, setId] = useState("");
@@ -174,9 +202,7 @@ function TeacherDashboard() {
         "Friday",
       ];
       const mergedSlots = ALL_DAYS.map((dayName) => {
-        const found = savedSlots.find(
-          (s) => s.day.toLowerCase() === dayName.toLowerCase(),
-        );
+        const found = savedSlots.find((s) => s.day.toLowerCase() === dayName.toLowerCase());
         return {
           day: dayName,
           times: found ? found.times : [],
@@ -603,7 +629,41 @@ function TeacherDashboard() {
             </div>
           </div>
         )}
+
+        <section className="mt-14 rounded-2xl border border-destructive/40 bg-destructive/5 p-5">
+          <h2 className="text-lg font-extrabold text-destructive">{t("td_danger_zone")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("td_delete_sub")}</p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="mt-4" disabled={deleting}>
+                {deleting ? (
+                  <Loader2 size={16} className="animate-spin me-2" />
+                ) : (
+                  <Trash2 size={16} className="me-2" />
+                )}
+                {t("td_delete_listing")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("td_delete_confirm_title")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("td_delete_confirm_body")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("td_delete_cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    void deleteListing();
+                  }}
+                >
+                  {t("td_delete_confirm_btn")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
       </main>
+
       <Footer />
     </div>
   );

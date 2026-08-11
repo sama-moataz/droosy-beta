@@ -269,6 +269,20 @@ export const STRINGS: Dict = {
     en: "Could not load your teacher profile",
     ar: "تعذر تحميل ملف المدرس الخاص بك",
   },
+  td_danger_zone: { en: "Danger zone", ar: "منطقة الخطر" },
+  td_delete_listing: { en: "Delete teacher listing", ar: "حذف ملف المدرس" },
+  td_delete_sub: {
+    en: "Permanently remove this teacher listing, along with its bookings and reviews. This cannot be undone.",
+    ar: "حذف ملف المدرس نهائيًا مع كل الحجوزات والتقييمات. لا يمكن التراجع عن هذا الإجراء.",
+  },
+  td_delete_confirm_title: { en: "Delete this listing?", ar: "حذف هذا الملف؟" },
+  td_delete_confirm_body: {
+    en: "This will permanently delete the teacher listing and all related bookings and reviews.",
+    ar: "سيتم حذف ملف المدرس وكل الحجوزات والتقييمات المرتبطة به نهائيًا.",
+  },
+  td_delete_cancel: { en: "Cancel", ar: "إلغاء" },
+  td_delete_confirm_btn: { en: "Yes, delete", ar: "نعم، احذف" },
+  td_toast_deleted: { en: "Teacher listing deleted", ar: "تم حذف ملف المدرس" },
 
   // Admin Dashboard
   admin_badge: { en: "Admin", ar: "لوحة الأدمن" },

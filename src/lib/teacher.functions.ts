@@ -158,3 +158,29 @@ export const updateTeacherSlots = createServerFn({ method: "POST" })
     if (upErr) throw upErr;
     return { ok: true };
   });
+
+export const deleteTeacherListing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().min(1) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+
+    if (admin !== true) {
+      const { data: teacher, error: verifyErr } = await context.supabase
+        .from("teachers")
+        .select("owner_id")
+        .eq("id", data.id)
+        .single();
+      if (verifyErr || !teacher || teacher.owner_id !== context.userId) {
+        throw new Error("Forbidden: You can only delete your own teacher listing");
+      }
+    }
+
+    // RLS also enforces this (teachers_owner_delete / teachers_admin_delete).
+    const { error: delErr } = await context.supabase.from("teachers").delete().eq("id", data.id);
+    if (delErr) throw delErr;
+    return { ok: true };
+  });

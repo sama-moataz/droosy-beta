@@ -511,11 +511,47 @@ function AdminPage() {
                           {L(governorateLabel(tRow.region))}
                         </p>
                       </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
-                          {t("admin_edit_teacher_btn")}
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
+                            {t("admin_edit_teacher_btn")}
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={busy === `del-${tRow.id}`}
+                            >
+                              {busy === `del-${tRow.id}` ? (
+                                <Loader2 size={14} className="animate-spin me-2" />
+                              ) : (
+                                <Trash2 size={14} className="me-2" />
+                              )}
+                              {t("td_delete_listing")}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("td_delete_confirm_title")}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("td_delete_confirm_body")}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("td_delete_cancel")}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  void removeTeacher(tRow.id);
+                                }}
+                              >
+                                {t("td_delete_confirm_btn")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   ))}
                 </div>

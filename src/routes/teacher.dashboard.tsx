@@ -164,19 +164,25 @@ function TeacherDashboard() {
       setGrades((data.grades as Grade[]) || []);
 
       const savedSlots = (data.slots as { day: string; times: string[] }[]) || [];
-      if (savedSlots.length === 0) {
-        setSlots([
-          { day: "Saturday", times: [] },
-          { day: "Sunday", times: [] },
-          { day: "Monday", times: [] },
-          { day: "Tuesday", times: [] },
-          { day: "Wednesday", times: [] },
-          { day: "Thursday", times: [] },
-          { day: "Friday", times: [] },
-        ]);
-      } else {
-        setSlots(savedSlots);
-      }
+      const ALL_DAYS = [
+        "Saturday",
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+      ];
+      const mergedSlots = ALL_DAYS.map((dayName) => {
+        const found = savedSlots.find(
+          (s) => s.day.toLowerCase() === dayName.toLowerCase(),
+        );
+        return {
+          day: dayName,
+          times: found ? found.times : [],
+        };
+      });
+      setSlots(mergedSlots);
     } catch (err) {
       console.error(err);
       toast.error(t("td_toast_load_err"));

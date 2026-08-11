@@ -520,9 +520,7 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(
-                    teacherBookings.length * (teacherPrice || Number(price || 0))
-                  ).toLocaleString()}{" "}
+                  {(teacherBookings.length * (teacherPrice || Number(price || 0))).toLocaleString()}{" "}
                   <span className="text-sm font-bold text-muted-foreground">EGP</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -546,7 +544,6 @@ function TeacherDashboard() {
                   ).size.toLocaleString()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
-
               </div>
 
               <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">

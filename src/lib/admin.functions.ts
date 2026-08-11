@@ -5,14 +5,28 @@ import type { Database } from "@/integrations/supabase/types";
 
 type TeacherUpdate = Database["public"]["Tables"]["teachers"]["Update"];
 
+// Resolves an authenticated user's id from their email using the GoTrue admin API
+// (service-role only — never exposed to the client). profiles has no email column,
+// so this is the only correct way to go from email -> auth user id.
 async function resolveOwnerIdByEmail(
-  context: { supabase: any },
+  _context: { supabase: any },
   email: string,
 ): Promise<string | null> {
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+    throw new Error(
+      "Cannot resolve user by email: SUPABASE_SERVICE_ROLE_KEY is not configured. Add it to your environment variables.",
+    );
+  }
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const target = email.trim().toLowerCase();
-  if (!target) return null;
-  const { data } = await context.supabase.from("teacher_applications").select("user_id").limit(100);
-  // Returns user_id if matched from application or null
+  const perPage = 1000;
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(`Failed to look up user by email: ${error.message}`);
+    const match = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (match) return match.id;
+    if (data.users.length < perPage) break;
+  }
   return null;
 }
 

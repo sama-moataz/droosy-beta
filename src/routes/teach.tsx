@@ -300,7 +300,9 @@ function TeachPage() {
               <p className="mt-1 text-secondary-foreground/80">{t("already_teacher_body")}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm">
-                  <Link to="/teacher/dashboard">{t("nav_teacher_dashboard")}</Link>
+                  <Link to="/teacher/dashboard" search={{ teacherId: undefined, tab: undefined }}>
+                    {t("nav_teacher_dashboard")}
+                  </Link>
                 </Button>
                 {teacherId && (
                   <Button asChild size="sm" variant="outline">

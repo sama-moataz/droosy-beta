@@ -540,7 +540,10 @@ function AdminPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Button asChild variant="outline" size="sm">
-                          <Link to="/teacher/dashboard" search={{ teacherId: tRow.id }}>
+                          <Link
+                            to="/teacher/dashboard"
+                            search={{ teacherId: tRow.id, tab: undefined }}
+                          >
                             {t("admin_edit_teacher_btn")}
                           </Link>
                         </Button>

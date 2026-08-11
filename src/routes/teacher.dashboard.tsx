@@ -80,7 +80,7 @@ export const Route = createFileRoute("/teacher/dashboard")({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       teacherId: (search["teacherId"] as string) || undefined,
-      tab: (search["tab"] as "profile" | "availability") || undefined,
+      tab: (search["tab"] as "overview" | "profile" | "availability" | undefined) || undefined,
     };
   },
   head: () => ({
@@ -125,7 +125,7 @@ function Chips<T extends string>({
 
 function TeacherDashboard() {
   const { teacherId: searchTeacherId, tab: searchTab } = Route.useSearch();
-  const { user, authReady, profile, isAdmin, bookings, getTeacher } = useDroosy();
+  const { user, authReady, profile, isAdmin } = useDroosy();
   const { t, lang, pick } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
@@ -179,7 +179,33 @@ function TeacherDashboard() {
   // Slots state
   const [slots, setSlots] = useState<{ day: string; times: string[] }[]>([]);
 
+  // Teacher analytics — bookings made by students for this teacher
+  const [teacherBookings, setTeacherBookings] = useState<
+    { id: string; user_id: string; day: string | null; time: string | null }[]
+  >([]);
+  const [teacherRating, setTeacherRating] = useState<number | null>(null);
+  const [teacherStudents, setTeacherStudents] = useState<number | null>(null);
+
   const [appStatus, setAppStatus] = useState<string | null>(null);
+
+  // Fetch real analytics when teacher id is known
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    void (async () => {
+      const [{ data: bookingRows }, { data: teacherRow }] = await Promise.all([
+        supabase.from("bookings").select("id, user_id, day, time").eq("teacher_id", id),
+        supabase.from("teachers").select("rating, students").eq("id", id).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setTeacherBookings(bookingRows ?? []);
+      setTeacherRating(teacherRow?.rating ?? null);
+      setTeacherStudents(teacherRow?.students ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -475,13 +501,12 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(
-                    myBookings.length * Number(price || liveTeacher?.pricePerSession || 0)
-                  ).toLocaleString()}{" "}
+                  {(teacherBookings.length * Number(price || 0)).toLocaleString()}{" "}
                   <span className="text-sm font-bold text-muted-foreground">EGP</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  From {myBookings.length} session booking{myBookings.length === 1 ? "" : "s"}
+                  From {teacherBookings.length} session booking
+                  {teacherBookings.length === 1 ? "" : "s"}
                 </p>
               </div>
 
@@ -495,7 +520,7 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {Math.max(myBookings.length, liveTeacher?.students || 0).toLocaleString()}
+                  {(teacherStudents ?? teacherBookings.length).toLocaleString()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
               </div>
@@ -510,7 +535,7 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {myBookings.length}
+                  {teacherBookings.length}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Active student class slots</p>
               </div>
@@ -525,7 +550,7 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(liveTeacher?.rating || 4.9).toFixed(1)}{" "}
+                  {teacherRating != null ? teacherRating.toFixed(1) : "—"}{" "}
                   <span className="text-sm font-bold text-muted-foreground">/ 5.0</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Verified student feedback</p>
@@ -548,7 +573,7 @@ function TeacherDashboard() {
                 </Button>
               </div>
 
-              {myBookings.length === 0 ? (
+              {teacherBookings.length === 0 ? (
                 <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
                   <p className="text-sm font-semibold text-muted-foreground">
                     No sessions booked by students yet for your open slots.
@@ -563,24 +588,23 @@ function TeacherDashboard() {
                 </div>
               ) : (
                 <div className="mt-6 divide-y divide-border">
-                  {myBookings.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between py-4.5">
+                  {teacherBookings.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between py-4">
                       <div className="flex items-center gap-3">
                         <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 font-bold text-primary">
-                          {b.day.slice(0, 3)}
+                          {String(b.day ?? "").slice(0, 3)}
                         </span>
                         <div>
                           <p className="text-sm font-bold text-foreground">
-                            {b.day} at {b.time}
+                            {String(b.day ?? "")} at {String(b.time ?? "")}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {subject || liveTeacher?.subject || "Private Session"} ·{" "}
-                            {centerName || "Center / Online"}
+                            {subject || "Private Session"} · {centerName || "Center / Online"}
                           </p>
                         </div>
                       </div>
                       <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        {Number(price || liveTeacher?.pricePerSession || 0)} EGP
+                        {Number(price || 0)} EGP
                       </span>
                     </div>
                   ))}

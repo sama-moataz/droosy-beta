@@ -58,7 +58,7 @@ function Schedule() {
           </div>
           {isTeacher && (
             <Button asChild variant="outline" className="shrink-0">
-              <Link to="/teacher/dashboard" search={{ tab: "availability" }}>
+              <Link to="/teacher/dashboard" search={{ tab: "availability", teacherId: undefined }}>
                 Manage Open Availability
               </Link>
             </Button>

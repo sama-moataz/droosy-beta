@@ -127,28 +127,28 @@ export function DroosyProvider({ catalog, children }: { catalog: Catalog; childr
       setTeacherId(ownedTeacher?.id ?? null);
 
       const isTeacherUser =
-        prof?.role === "teacher" ||
-        user.user_metadata?.role === "teacher" ||
+        prof?.["role"] === "teacher" ||
+        user.user_metadata?.["role"] === "teacher" ||
         Boolean(ownedTeacher?.id) ||
         Boolean(teacherApp?.id);
 
       if (prof) {
         const resolvedRole = isTeacherUser
           ? "teacher"
-          : ((prof.role as "student" | "teacher") ?? "student");
+          : ((prof["role"] as "student" | "teacher") ?? "student");
         setProfile({
           id: prof.id,
-          fullName: prof.full_name ?? "",
+          fullName: prof["full_name"] ?? "",
           role: resolvedRole,
         });
 
-        if (isTeacherUser && prof.role !== "teacher") {
+        if (isTeacherUser && prof["role"] !== "teacher") {
           void supabase.from("profiles").update({ role: "teacher" }).eq("id", user.id);
         }
       } else {
         setProfile({
           id: user.id,
-          fullName: (user.user_metadata?.full_name as string) ?? "",
+          fullName: (user.user_metadata?.["full_name"] as string) ?? "",
           role: isTeacherUser ? "teacher" : "student",
         });
       }

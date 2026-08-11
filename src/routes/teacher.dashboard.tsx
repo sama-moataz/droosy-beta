@@ -603,7 +603,41 @@ function TeacherDashboard() {
             </div>
           </div>
         )}
+
+        <section className="mt-14 rounded-2xl border border-destructive/40 bg-destructive/5 p-5">
+          <h2 className="text-lg font-extrabold text-destructive">{t("td_danger_zone")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("td_delete_sub")}</p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="mt-4" disabled={deleting}>
+                {deleting ? (
+                  <Loader2 size={16} className="animate-spin me-2" />
+                ) : (
+                  <Trash2 size={16} className="me-2" />
+                )}
+                {t("td_delete_listing")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("td_delete_confirm_title")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("td_delete_confirm_body")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("td_delete_cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    void deleteListing();
+                  }}
+                >
+                  {t("td_delete_confirm_btn")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
       </main>
+
       <Footer />
     </div>
   );

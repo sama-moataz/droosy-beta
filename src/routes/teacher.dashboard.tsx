@@ -520,7 +520,9 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(teacherBookings.length * Number(price || 0)).toLocaleString()}{" "}
+                  {(
+                    teacherBookings.length * (teacherPrice || Number(price || 0))
+                  ).toLocaleString()}{" "}
                   <span className="text-sm font-bold text-muted-foreground">EGP</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">

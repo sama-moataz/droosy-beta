@@ -227,7 +227,15 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         if (owned) teacherId = owned.id;
       }
 
-      if (!teacherId) return { bookings: [], reviews: [], rating: null, students: null };
+      if (!teacherId)
+        return {
+          bookings: [],
+          reviews: [],
+          rating: null,
+          students: null,
+          pricePerSession: 0,
+          teacherId: null,
+        };
 
       // Verify caller is admin OR owns this teacher record
       const { data: admin } = await context.supabase.rpc("has_role", {

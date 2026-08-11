@@ -214,6 +214,8 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
       }[];
       rating: number | null;
       students: number | null;
+      pricePerSession: number;
+      teacherId: string | null;
     }> => {
       let teacherId = data?.teacherId;
       if (!teacherId) {
@@ -225,7 +227,15 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         if (owned) teacherId = owned.id;
       }
 
-      if (!teacherId) return { bookings: [], reviews: [], rating: null, students: null };
+      if (!teacherId)
+        return {
+          bookings: [],
+          reviews: [],
+          rating: null,
+          students: null,
+          pricePerSession: 0,
+          teacherId: null,
+        };
 
       // Verify caller is admin OR owns this teacher record
       const { data: admin } = await context.supabase.rpc("has_role", {
@@ -256,7 +266,7 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
             .order("created_at", { ascending: false }),
           context.supabase
             .from("teachers")
-            .select("rating, students")
+            .select("rating, students, price_per_session")
             .eq("id", teacherId)
             .maybeSingle(),
         ],
@@ -286,6 +296,8 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         reviews: reviewRows ?? [],
         rating: teacherRow?.rating ?? null,
         students: teacherRow?.students ?? null,
+        pricePerSession: Number(teacherRow?.price_per_session ?? 0),
+        teacherId,
       };
     },
   );

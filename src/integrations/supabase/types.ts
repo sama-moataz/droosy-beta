@@ -355,6 +355,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_student_of_owner: {
+        Args: { _owner_id: string; _student_id: string }
+        Returns: boolean
+      }
+      owns_teacher: {
+        Args: { _teacher_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

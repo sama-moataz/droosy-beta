@@ -204,7 +204,7 @@ function TeacherDashboard() {
     }[]
   >([]);
   const [teacherRating, setTeacherRating] = useState<number | null>(null);
-  const [teacherStudents, setTeacherStudents] = useState<number | null>(null);
+  const [teacherPrice, setTeacherPrice] = useState<number>(0);
 
   const [appStatus, setAppStatus] = useState<string | null>(null);
 
@@ -218,7 +218,7 @@ function TeacherDashboard() {
         setTeacherBookings(res.bookings);
         setTeacherReviews(res.reviews);
         setTeacherRating(res.rating);
-        setTeacherStudents(res.students);
+        setTeacherPrice(res.pricePerSession);
       })
       .catch(console.error);
     return () => {
@@ -520,7 +520,9 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {(teacherBookings.length * Number(price || 0)).toLocaleString()}{" "}
+                  {(
+                    teacherBookings.length * (teacherPrice || Number(price || 0))
+                  ).toLocaleString()}{" "}
                   <span className="text-sm font-bold text-muted-foreground">EGP</span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -539,12 +541,12 @@ function TeacherDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
-                  {Math.max(
-                    new Set(teacherBookings.map((b) => b.user_id).filter(Boolean)).size,
-                    teacherStudents || 0,
-                  ).toLocaleString()}
+                  {new Set(
+                    teacherBookings.map((b) => b.user_id).filter(Boolean),
+                  ).size.toLocaleString()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
+
               </div>
 
               <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">

@@ -55,18 +55,23 @@ export const Route = createFileRoute("/teach")({
 });
 
 const schema = z.object({
-  fullName: z.string().trim().min(3).max(90),
-  fullNameAr: z.string().trim().max(90),
+  fullName: z.string().trim().min(3, "Full name must be at least 3 characters").max(90),
+  fullNameAr: z.string().trim().max(90).optional().default(""),
   phone: z
     .string()
     .trim()
-    .regex(/^(\+?20)?0?1[0125][0-9]{8}$/, "invalid"),
-  subject: z.string().min(1),
-  governorate: z.string().min(1),
-  area: z.string().trim().min(2).max(90),
+    .regex(
+      /^(\+?20)?0?1[0125][0-9]{8}$/,
+      "Egyptian phone number must be a valid 11-digit mobile starting with 010, 011, 012, or 015",
+    ),
+  subject: z.string().min(1, "Please select a subject"),
+  governorate: z.string().min(1, "Please select a governorate"),
+  area: z.string().trim().min(2, "Area / district must be at least 2 characters").max(90),
   pricePerSession: z.number().min(0).max(100000),
-  bio: z.string().trim().max(1200),
-  nationalIdLast4: z.string().regex(/^[0-9]{4}$/),
+  bio: z.string().trim().max(1200).optional().default(""),
+  nationalIdLast4: z
+    .string()
+    .regex(/^[0-9]{4}$/, "National ID last 4 digits must be exactly 4 numbers"),
 });
 
 type Toggle<T extends string> = { items: readonly T[]; label: (v: T) => string };
@@ -194,12 +199,12 @@ function TeachPage() {
       nationalIdLast4: idLast4.trim(),
     });
     if (!parsed.success) {
-      console.error("[teach] validation error", parsed.error.format());
-      toast.error(t("required_fields"));
+      const firstIssue = parsed.error.issues[0]?.message || t("required_fields");
+      toast.error(firstIssue);
       return;
     }
     if (modes.length === 0 || curricula.length === 0 || grades.length === 0) {
-      toast.error(t("required_fields"));
+      toast.error("Please select at least one lesson mode, curriculum, and grade level");
       return;
     }
     if (!idFile || !credFile) {

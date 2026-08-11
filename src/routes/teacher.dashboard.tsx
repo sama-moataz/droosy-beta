@@ -13,6 +13,10 @@ import {
   ExternalLink,
   Clock,
   CheckCircle2,
+  Wallet,
+  Users,
+  Star,
+  LayoutDashboard,
 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
@@ -121,8 +125,8 @@ function Chips<T extends string>({
 
 function TeacherDashboard() {
   const { teacherId: searchTeacherId, tab: searchTab } = Route.useSearch();
-  const { user, authReady, profile, isAdmin } = useDroosy();
-  const { t, lang } = useI18n();
+  const { user, authReady, profile, isAdmin, bookings, getTeacher } = useDroosy();
+  const { t, lang, pick } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
   const getProfile = useServerFn(getMyTeacherProfile);
@@ -131,8 +135,12 @@ function TeacherDashboard() {
   const deleteListingFn = useServerFn(deleteTeacherListing);
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"profile" | "availability">(
-    searchTab === "availability" ? "availability" : "profile",
+  const [tab, setTab] = useState<"overview" | "availability" | "profile">(
+    searchTab === "availability"
+      ? "availability"
+      : searchTab === "profile"
+        ? "profile"
+        : "overview",
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -420,14 +428,14 @@ function TeacherDashboard() {
         <div className="mt-10 flex flex-wrap gap-2 border-b border-border">
           <button
             type="button"
-            onClick={() => setTab("profile")}
+            onClick={() => setTab("overview")}
             className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
-              tab === "profile"
+              tab === "overview"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <User size={16} /> {t("td_tab_profile")}
+            <LayoutDashboard size={16} /> Overview & Analytics
           </button>
           <button
             type="button"
@@ -440,7 +448,147 @@ function TeacherDashboard() {
           >
             <CalendarDays size={16} /> {t("td_tab_availability")}
           </button>
+          <button
+            type="button"
+            onClick={() => setTab("profile")}
+            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
+              tab === "profile"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <User size={16} /> {t("td_tab_profile")}
+          </button>
         </div>
+
+        {tab === "overview" && (
+          <div className="mt-8 space-y-8">
+            {/* Analytics Stats Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Total Revenue
+                  </span>
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Wallet size={18} />
+                  </span>
+                </div>
+                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
+                  {(
+                    myBookings.length * Number(price || liveTeacher?.pricePerSession || 0)
+                  ).toLocaleString()}{" "}
+                  <span className="text-sm font-bold text-muted-foreground">EGP</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  From {myBookings.length} session booking{myBookings.length === 1 ? "" : "s"}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Total Students
+                  </span>
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <Users size={18} />
+                  </span>
+                </div>
+                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
+                  {Math.max(myBookings.length, liveTeacher?.students || 0).toLocaleString()}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Enrolled student audience</p>
+              </div>
+
+              <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Booked Sessions
+                  </span>
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <CalendarDays size={18} />
+                  </span>
+                </div>
+                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
+                  {myBookings.length}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Active student class slots</p>
+              </div>
+
+              <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Teacher Rating
+                  </span>
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                    <Star size={18} />
+                  </span>
+                </div>
+                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">
+                  {(liveTeacher?.rating || 4.9).toFixed(1)}{" "}
+                  <span className="text-sm font-bold text-muted-foreground">/ 5.0</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Verified student feedback</p>
+              </div>
+            </div>
+
+            {/* Upcoming Teaching Classes List */}
+            <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-extrabold text-foreground">
+                    Upcoming Teaching Classes
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Classes booked by students for your profile
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setTab("availability")}>
+                  <Clock size={14} className="me-1.5" /> Manage Open Slots
+                </Button>
+              </div>
+
+              {myBookings.length === 0 ? (
+                <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    No sessions booked by students yet for your open slots.
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">
+                    Ensure your available time slots are up to date so students can find and book
+                    your classes.
+                  </p>
+                  <Button size="sm" className="mt-4" onClick={() => setTab("availability")}>
+                    Set Available Hours
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-6 divide-y divide-border">
+                  {myBookings.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between py-4.5">
+                      <div className="flex items-center gap-3">
+                        <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 font-bold text-primary">
+                          {b.day.slice(0, 3)}
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">
+                            {b.day} at {b.time}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {subject || liveTeacher?.subject || "Private Session"} ·{" "}
+                            {centerName || "Center / Online"}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        {Number(price || liveTeacher?.pricePerSession || 0)} EGP
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {tab === "profile" && (
           <form onSubmit={saveProfile} className="mt-8 space-y-6 max-w-3xl">

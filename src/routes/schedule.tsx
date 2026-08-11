@@ -31,37 +31,52 @@ export const Route = createFileRoute("/schedule")({
 function Schedule() {
   const { bookings, removeBooking, getTeacher, user, profile, teacherId, authReady } = useDroosy();
   const { t, lang, pick } = useI18n();
-  const navigate = useNavigate();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
-  useEffect(() => {
-    if (authReady && user && (profile?.role === "teacher" || teacherId)) {
-      void navigate({ to: "/teacher/dashboard", search: { tab: "availability" } });
-    }
-  }, [authReady, user, profile, teacherId, navigate]);
+  const isTeacher = profile?.role === "teacher" || Boolean(teacherId);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-10">
-        <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight">
-          <CalendarDays size={26} className="text-primary" /> {t("sch_title")}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {bookings.length === 0
-            ? t("sch_empty_sub")
-            : t("sch_count_sub", {
-                n: bookings.length,
-                plural: bookings.length === 1 ? "" : "s",
-              })}
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight">
+              <CalendarDays size={26} className="text-primary" />
+              {isTeacher ? "Teaching Schedule" : t("sch_title")}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {isTeacher
+                ? "View every student session booked for your teaching profile in one calm timetable."
+                : bookings.length === 0
+                  ? t("sch_empty_sub")
+                  : t("sch_count_sub", {
+                      n: bookings.length,
+                      plural: bookings.length === 1 ? "" : "s",
+                    })}
+            </p>
+          </div>
+          {isTeacher && (
+            <Button asChild variant="outline" className="shrink-0">
+              <Link to="/teacher/dashboard" search={{ tab: "availability" }}>
+                Manage Open Availability
+              </Link>
+            </Button>
+          )}
+        </div>
 
         {bookings.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-dashed border-border p-14 text-center">
             <p className="font-semibold">{t("sch_empty_free")}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{t("sch_empty_hint")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isTeacher
+                ? "As students book sessions from your open availability, your teaching schedule will populate here automatically."
+                : t("sch_empty_hint")}
+            </p>
             <Button asChild className="mt-5">
-              <Link to="/">{t("sch_browse_btn")}</Link>
+              <Link to={isTeacher ? "/teacher/dashboard" : "/"}>
+                {isTeacher ? "Manage Available Slots" : t("sch_browse_btn")}
+              </Link>
             </Button>
           </div>
         ) : (

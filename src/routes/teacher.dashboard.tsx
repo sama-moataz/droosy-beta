@@ -220,7 +220,10 @@ function TeacherDashboard() {
         setTeacherRating(res.rating);
         setTeacherPrice(res.pricePerSession);
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error("getTeacherAnalytics failed:", err);
+        toast.error(t("td_toast_load_err"));
+      });
     return () => {
       cancelled = true;
     };

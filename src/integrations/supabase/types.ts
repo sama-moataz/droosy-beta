@@ -349,6 +349,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      get_user_id_by_email: {
+        Args: { _email: string };
+        Returns: string;
+      };
       is_student_of_owner: {
         Args: { _owner_id: string; _student_id: string };
         Returns: boolean;

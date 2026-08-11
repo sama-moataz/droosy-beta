@@ -253,34 +253,53 @@ export const getTeacherAnalytics = createServerFn({ method: "POST" })
         }
       }
 
-      const [{ data: bookingRows }, { data: reviewRows }, { data: teacherRow }] = await Promise.all(
-        [
-          context.supabase
-            .from("bookings")
-            .select("id, user_id, day, time")
-            .eq("teacher_id", teacherId),
-          context.supabase
-            .from("reviews")
-            .select("id, student_name, rating, body, created_at, verified")
-            .eq("teacher_id", teacherId)
-            .order("created_at", { ascending: false }),
-          context.supabase
-            .from("teachers")
-            .select("rating, students, price_per_session")
-            .eq("id", teacherId)
-            .maybeSingle(),
-        ],
-      );
+      const [bookingsRes, reviewsRes, teacherRes] = await Promise.all([
+        context.supabase
+          .from("bookings")
+          .select("id, user_id, day, time")
+          .eq("teacher_id", teacherId),
+        context.supabase
+          .from("reviews")
+          .select("id, student_name, rating, body, created_at, verified")
+          .eq("teacher_id", teacherId)
+          .order("created_at", { ascending: false }),
+        context.supabase
+          .from("teachers")
+          .select("rating, students, price_per_session")
+          .eq("id", teacherId)
+          .maybeSingle(),
+      ]);
+
+      if (bookingsRes.error) {
+        console.error("getTeacherAnalytics: bookings query failed:", bookingsRes.error);
+        throw new Error(`Failed to load bookings: ${bookingsRes.error.message}`);
+      }
+      if (reviewsRes.error) {
+        console.error("getTeacherAnalytics: reviews query failed:", reviewsRes.error);
+        throw new Error(`Failed to load reviews: ${reviewsRes.error.message}`);
+      }
+      if (teacherRes.error) {
+        console.error("getTeacherAnalytics: teacher query failed:", teacherRes.error);
+        throw new Error(`Failed to load teacher record: ${teacherRes.error.message}`);
+      }
+
+      const bookingRows = bookingsRes.data;
+      const reviewRows = reviewsRes.data;
+      const teacherRow = teacherRes.data;
 
       const userIds = Array.from(
         new Set((bookingRows ?? []).map((b) => b.user_id).filter(Boolean)),
       );
       let studentNamesMap: Record<string, string> = {};
       if (userIds.length > 0) {
-        const { data: profs } = await context.supabase
+        const { data: profs, error: profsErr } = await context.supabase
           .from("profiles")
           .select("id, full_name")
           .in("id", userIds);
+        if (profsErr) {
+          console.error("getTeacherAnalytics: profiles query failed:", profsErr);
+          throw new Error(`Failed to load student profiles: ${profsErr.message}`);
+        }
         if (profs) {
           studentNamesMap = Object.fromEntries(profs.map((p) => [p.id, p.full_name]));
         }

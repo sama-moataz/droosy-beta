@@ -12,7 +12,20 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deleteTeacherListing } from "@/lib/teacher.functions";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
 import { useI18n } from "@/lib/i18n";

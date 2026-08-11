@@ -104,14 +104,15 @@ export function DroosyProvider({ catalog, children }: { catalog: Catalog; childr
         { data: books, error: booksErr },
         { data: roles, error: rolesErr },
         { data: ownedTeacher, error: teacherErr },
+        { data: teacherApp, error: appErr },
       ] = await Promise.all([
         supabase.from("profiles").select("id, full_name, role").eq("id", user.id).maybeSingle(),
         supabase.from("bookings").select("id, teacher_id, day, time, bundle_id"),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
         // Canonical "is this user an existing teacher" signal: a teachers row they own.
-        // Do NOT use profiles.role for this — it can be set at signup time and can drift
-        // from the real teachers/owner_id relationship created by admin approval.
         supabase.from("teachers").select("id").eq("owner_id", user.id).maybeSingle(),
+        // Check if user submitted a teacher application
+        supabase.from("teacher_applications").select("id").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
       // These queries silently returning empty results is indistinguishable from "no data"
@@ -120,13 +121,35 @@ export function DroosyProvider({ catalog, children }: { catalog: Catalog; childr
       if (booksErr) console.error("[droosy] failed to load bookings", booksErr);
       if (rolesErr) console.error("[droosy] failed to load user_roles", rolesErr);
       if (teacherErr) console.error("[droosy] failed to load owned teacher", teacherErr);
+      if (appErr) console.error("[droosy] failed to load teacher application", appErr);
+
       setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
       setTeacherId(ownedTeacher?.id ?? null);
+
+      const isTeacherUser =
+        prof?.role === "teacher" ||
+        user.user_metadata?.role === "teacher" ||
+        Boolean(ownedTeacher?.id) ||
+        Boolean(teacherApp?.id);
+
       if (prof) {
+        const resolvedRole = isTeacherUser
+          ? "teacher"
+          : ((prof.role as "student" | "teacher") ?? "student");
         setProfile({
           id: prof.id,
           fullName: prof.full_name ?? "",
-          role: (prof.role as "student" | "teacher") ?? "student",
+          role: resolvedRole,
+        });
+
+        if (isTeacherUser && prof.role !== "teacher") {
+          void supabase.from("profiles").update({ role: "teacher" }).eq("id", user.id);
+        }
+      } else {
+        setProfile({
+          id: user.id,
+          fullName: (user.user_metadata?.full_name as string) ?? "",
+          role: isTeacherUser ? "teacher" : "student",
         });
       }
       setBookings(

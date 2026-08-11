@@ -229,13 +229,12 @@ function TeacherDashboard() {
     void (async () => {
       // Allow teachers and admins (admins may be editing a teacher via ?teacherId=...)
       if (profile?.role !== "teacher" && !isAdmin && !searchTeacherId) {
-        // Also allow if this user owns a teacher record
-        const { data: ownedTeacher } = await supabase
-          .from("teachers")
-          .select("id")
-          .eq("owner_id", user.id)
-          .maybeSingle();
-        if (!ownedTeacher) {
+        // Also allow if this user owns a teacher record or has a teacher application
+        const [{ data: ownedTeacher }, { data: teacherApp }] = await Promise.all([
+          supabase.from("teachers").select("id").eq("owner_id", user.id).maybeSingle(),
+          supabase.from("teacher_applications").select("id").eq("user_id", user.id).maybeSingle(),
+        ]);
+        if (!ownedTeacher && !teacherApp) {
           void navigate({ to: "/" });
           return;
         }

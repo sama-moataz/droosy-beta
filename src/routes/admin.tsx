@@ -398,6 +398,7 @@ function AdminPage() {
   const fetchApps = useServerFn(listApplications);
   const fetchTeachers = useServerFn(listAllTeachersAdmin);
   const review = useServerFn(reviewApplication);
+  const deleteTeacher = useServerFn(deleteTeacherListing);
 
   const [apps, setApps] = useState<AdminApplication[] | null>(null);
   const [teachers, setTeachers] = useState<

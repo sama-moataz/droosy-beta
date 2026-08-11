@@ -11,9 +11,11 @@ import {
   Plus,
   Trash2,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { useDroosy } from "@/lib/droosy-store";
+import { supabase } from "@/integrations/supabase/client";
 import { useI18n, dayLabel } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+// Predefined time slots from 8:00 AM to 10:00 PM in 30-minute increments
+const TIME_SLOTS: string[] = [];
+for (let h = 8; h <= 22; h++) {
+  for (const m of [0, 30]) {
+    if (h === 22 && m === 30) continue;
+    const hour12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const mm = m === 0 ? "00" : "30";
+    TIME_SLOTS.push(`${hour12}:${mm} ${ampm}`);
+  }
+}
 import {
   GOVERNORATES,
   SUBJECTS,
@@ -127,7 +141,9 @@ function TeacherDashboard() {
 
   const loadProfile = useCallback(async () => {
     try {
-      const data = await getProfile(searchTeacherId ? { data: { teacherId: searchTeacherId } } : undefined);
+      const data = await getProfile(
+        searchTeacherId ? { data: { teacherId: searchTeacherId } } : undefined,
+      );
       if (!data) {
         setLoading(false);
         return;
@@ -175,13 +191,23 @@ function TeacherDashboard() {
       void navigate({ to: "/auth" });
       return;
     }
-    // Allow teachers and admins (admins may be editing a teacher via ?teacherId=...)
-    if (profile?.role !== "teacher" && !isAdmin) {
-      void navigate({ to: "/" });
-      return;
-    }
-    void loadProfile();
-  }, [authReady, user, profile, isAdmin, navigate, loadProfile]);
+    void (async () => {
+      // Allow teachers and admins (admins may be editing a teacher via ?teacherId=...)
+      if (profile?.role !== "teacher" && !isAdmin && !searchTeacherId) {
+        // Also allow if this user owns a teacher record
+        const { data: ownedTeacher } = await supabase
+          .from("teachers")
+          .select("id")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (!ownedTeacher) {
+          void navigate({ to: "/" });
+          return;
+        }
+      }
+      void loadProfile();
+    })();
+  }, [authReady, user, profile, isAdmin, searchTeacherId, navigate, loadProfile]);
 
   const toggle = <T extends string>(value: T, list: T[], set: (v: T[]) => void) =>
     set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -246,18 +272,22 @@ function TeacherDashboard() {
     }
   };
 
+  // Per-day selected time for the dropdown
+  const [selectedTime, setSelectedTime] = useState<Record<number, string>>({});
+
   const addTime = (dayIdx: number) => {
-    const time = window.prompt(t("td_prompt_time"));
-    if (!time || !time.trim()) return;
+    const time = selectedTime[dayIdx];
+    if (!time) return;
     setSlots((prev) => {
       const next = [...prev];
       const slot = next[dayIdx];
       if (!slot) return next;
-      if (!slot.times.includes(time.trim())) {
-        slot.times = [...slot.times, time.trim()].sort();
+      if (!slot.times.includes(time)) {
+        slot.times = [...slot.times, time].sort();
       }
       return next;
     });
+    setSelectedTime((prev) => ({ ...prev, [dayIdx]: "" }));
   };
 
   const removeTime = (dayIdx: number, timeToRemove: string) => {
@@ -495,13 +525,36 @@ function TeacherDashboard() {
             <div className="space-y-6">
               {slots.map((dayObj, dayIdx) => (
                 <div key={dayObj.day} className="rounded-2xl border border-border bg-card p-5">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-lg font-bold text-foreground">
                       {dayLabel(dayObj.day, lang)}
                     </h3>
-                    <Button variant="outline" size="sm" onClick={() => addTime(dayIdx)}>
-                      <Plus size={16} className="me-2" /> {t("td_add_time")}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={selectedTime[dayIdx] ?? ""}
+                        onValueChange={(v) => setSelectedTime((prev) => ({ ...prev, [dayIdx]: v }))}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <Clock size={14} className="me-1.5 text-muted-foreground" />
+                          <SelectValue placeholder={t("td_select_time")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.filter((ts) => !dayObj.times.includes(ts)).map((ts) => (
+                            <SelectItem key={ts} value={ts}>
+                              {ts}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addTime(dayIdx)}
+                        disabled={!selectedTime[dayIdx]}
+                      >
+                        <Plus size={16} className="me-1" /> {t("td_add_time")}
+                      </Button>
+                    </div>
                   </div>
 
                   {dayObj.times.length === 0 ? (

@@ -278,7 +278,7 @@ function Home() {
                   {t("clear_filters")}
                 </Button>
                 {/* Teach on Droosy CTA */}
-                {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
+                {authReady && !isAdmin && (!user || profile?.role === "teacher" || teacherId) && (
                   <Button asChild>
                     <Link to={user && teacherId ? "/teacher/dashboard" : "/teach"}>
                       {user && teacherId ? t("nav_teacher_dashboard") : t("no_match_cta")}

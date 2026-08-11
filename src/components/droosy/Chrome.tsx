@@ -119,7 +119,7 @@ export function Header() {
           <IconButton onClick={toggleTheme} label={t("theme_toggle")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          {authReady && !isAdmin && (!user || profile?.role === "teacher") && (
+          {authReady && !isAdmin && (!user || profile?.role === "teacher" || teacherId) && (
             <Link
               to={user && teacherId ? "/teacher/dashboard" : "/teach"}
               className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground sm:inline-flex"

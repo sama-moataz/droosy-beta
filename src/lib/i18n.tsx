@@ -250,6 +250,7 @@ export const STRINGS: Dict = {
     ar: "أضف الأوقات المتاحة لديك للتدريس. يمكن للطلاب اختيار هذه المواعيد عند الحجز.",
   },
   td_add_time: { en: "Add Time", ar: "إضافة موعد" },
+  td_select_time: { en: "Select time", ar: "اختر الوقت" },
   td_no_times_set: { en: "No times set for {day}.", ar: "لا توجد مواعيد محددة ليوم {day}." },
   td_remove_time: { en: "Remove time", ar: "إزالة الموعد" },
   td_prompt_time: {

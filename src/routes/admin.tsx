@@ -429,6 +429,19 @@ function AdminPage() {
     void load();
   }, [authReady, user, load]);
 
+  const removeTeacher = async (teacherRowId: string) => {
+    setBusy(`del-${teacherRowId}`);
+    try {
+      await deleteTeacher({ data: { id: teacherRowId } });
+      toast.success(t("td_toast_deleted"));
+      await load();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const decide = async (id: string, decision: "approved" | "rejected") => {
     setBusy(id);
     try {

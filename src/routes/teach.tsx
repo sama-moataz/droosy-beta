@@ -102,7 +102,7 @@ function Chips<T extends string>({
 
 function TeachPage() {
   const { t, lang } = useI18n();
-  const { user, authReady, teacherId } = useDroosy();
+  const { user, authReady, profile, teacherId } = useDroosy();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
 
   const [fullName, setFullName] = useState("");
@@ -125,10 +125,11 @@ function TeachPage() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
+  const isTeacher = Boolean(teacherId || profile?.role === "teacher");
+
   useEffect(() => {
-    if (!user || teacherId) {
-      // No signed-in user, or already an approved teacher — an application status is not
-      // relevant to what we render in either case.
+    if (!user || isTeacher) {
+      // No signed-in user, or already a teacher — application status is not relevant
       setStatus(null);
       return;
     }
@@ -145,7 +146,7 @@ function TeachPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, teacherId]);
+  }, [user, isTeacher]);
 
   const toggle = <T extends string>(value: T, list: T[], set: (v: T[]) => void) =>
     set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -153,8 +154,6 @@ function TeachPage() {
   const freshSession = async () => {
     const { data } = await supabase.auth.getSession();
     const expiresAt = data.session?.expires_at ?? 0;
-    // Refresh when the token is expired or about to expire (also covers client clock skew,
-    // which the storage API reports as "exp timecheck failed").
     if (!data.session || expiresAt * 1000 - Date.now() < 5 * 60 * 1000) {
       const { data: refreshed } = await supabase.auth.refreshSession();
       return refreshed.session ?? data.session ?? null;
@@ -183,18 +182,24 @@ function TeachPage() {
       toast.error(t("sign_in_first"));
       return;
     }
+    const cleanPhone = phone.trim().replace(/[\s\-()]/g, "");
     const parsed = schema.safeParse({
-      fullName,
-      fullNameAr,
-      phone,
+      fullName: fullName.trim(),
+      fullNameAr: fullNameAr.trim(),
+      phone: cleanPhone,
       subject,
       governorate,
-      area,
-      pricePerSession: Number(price || 0),
-      bio,
-      nationalIdLast4: idLast4,
+      area: area.trim(),
+      pricePerSession: price ? Number(price) : 0,
+      bio: bio.trim(),
+      nationalIdLast4: idLast4.trim(),
     });
-    if (!parsed.success || modes.length === 0 || curricula.length === 0 || grades.length === 0) {
+    if (!parsed.success) {
+      console.error("[teach] validation error", parsed.error.format());
+      toast.error(t("required_fields"));
+      return;
+    }
+    if (modes.length === 0 || curricula.length === 0 || grades.length === 0) {
       toast.error(t("required_fields"));
       return;
     }
@@ -267,7 +272,7 @@ function TeachPage() {
           </div>
         )}
 
-        {user && teacherId && (
+        {user && isTeacher && (
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm">
             <GraduationCap size={18} className="mt-0.5 shrink-0 text-primary" />
             <div>
@@ -276,28 +281,31 @@ function TeachPage() {
               </p>
               <p className="mt-1 text-secondary-foreground/80">{t("already_teacher_body")}</p>
               <Button asChild size="sm" className="mt-3">
-                <Link to="/teacher/$teacherId" params={{ teacherId }}>
-                  {t("view_my_profile")}
+                <Link
+                  to={teacherId ? "/teacher/$teacherId" : "/teacher/dashboard"}
+                  params={teacherId ? { teacherId } : undefined}
+                >
+                  {t("nav_teacher_dashboard")}
                 </Link>
               </Button>
             </div>
           </div>
         )}
 
-        {user && !teacherId && status === "pending" && (
+        {user && !isTeacher && status === "pending" && (
           <div className="mt-6 flex items-center gap-2 rounded-2xl border border-primary/40 bg-brand-soft p-5 text-sm font-semibold text-secondary-foreground">
             <CheckCircle2 size={18} className="text-primary" />
             {t("application_pending")}
           </div>
         )}
 
-        {user && !teacherId && status === "rejected" && (
+        {user && !isTeacher && status === "rejected" && (
           <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
             {t("application_rejected")}
           </div>
         )}
 
-        {user && !teacherId && status !== "pending" && (
+        {user && !isTeacher && status !== "pending" && (
           <form onSubmit={submit} className="mt-8 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">

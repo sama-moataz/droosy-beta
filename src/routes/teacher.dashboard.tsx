@@ -75,6 +75,7 @@ export const Route = createFileRoute("/teacher/dashboard")({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       teacherId: (search["teacherId"] as string) || undefined,
+      tab: (search["tab"] as "profile" | "availability") || undefined,
     };
   },
   head: () => ({
@@ -118,7 +119,7 @@ function Chips<T extends string>({
 }
 
 function TeacherDashboard() {
-  const { teacherId: searchTeacherId } = Route.useSearch();
+  const { teacherId: searchTeacherId, tab: searchTab } = Route.useSearch();
   const { user, authReady, profile, isAdmin } = useDroosy();
   const { t, lang } = useI18n();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
@@ -129,7 +130,9 @@ function TeacherDashboard() {
   const deleteListingFn = useServerFn(deleteTeacherListing);
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"profile" | "availability">("profile");
+  const [tab, setTab] = useState<"profile" | "availability">(
+    searchTab === "availability" ? "availability" : "profile",
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);

@@ -119,16 +119,26 @@ export function Header() {
           <IconButton onClick={toggleTheme} label={t("theme_toggle")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          {authReady && !isAdmin && (!user || profile?.role === "teacher" || teacherId) && (
-            <Link
-              to={user && teacherId ? "/teacher/dashboard" : "/teach"}
-              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
-              activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
-            >
-              <GraduationCap size={16} />
-              <span className="hidden lg:inline">{t("nav_teach")}</span>
-            </Link>
-          )}
+          {authReady &&
+            !isAdmin &&
+            (!user || profile?.role === "teacher" || Boolean(teacherId)) && (
+              <Link
+                to={
+                  user && (teacherId || profile?.role === "teacher")
+                    ? "/teacher/dashboard"
+                    : "/teach"
+                }
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"
+                activeProps={{ className: "bg-brand-soft text-secondary-foreground" }}
+              >
+                <GraduationCap size={16} />
+                <span className="hidden sm:inline">
+                  {user && (teacherId || profile?.role === "teacher")
+                    ? t("nav_teacher_dashboard")
+                    : t("nav_teach")}
+                </span>
+              </Link>
+            )}
           <Link
             to="/schedule"
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-soft hover:text-secondary-foreground"

@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { CalendarDays, Clock, MapPin, Trash2 } from "lucide-react";
 import { Header, Footer } from "@/components/droosy/Chrome";
 import { initials, subjectLabel } from "@/lib/droosy-data";
@@ -28,9 +29,16 @@ export const Route = createFileRoute("/schedule")({
 });
 
 function Schedule() {
-  const { bookings, removeBooking, getTeacher } = useDroosy();
+  const { bookings, removeBooking, getTeacher, user, profile, teacherId, authReady } = useDroosy();
   const { t, lang, pick } = useI18n();
+  const navigate = useNavigate();
   const L = (b: { en: string; ar: string }) => (lang === "ar" ? b.ar : b.en);
+
+  useEffect(() => {
+    if (authReady && user && (profile?.role === "teacher" || teacherId)) {
+      void navigate({ to: "/teacher/dashboard", search: { tab: "availability" } });
+    }
+  }, [authReady, user, profile, teacherId, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
